@@ -239,9 +239,6 @@ float2 collideCell(int3 gridPos,
 		{
 			if (j != index)                // check not colliding with self
 			{
-				/*	float3 pos2 = make_float3(oldPos[j]);
-					float3 vel2 = make_float3(oldVel[j]);*/
-
 				float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y);
 				float2 vel2 = make_float2(oldVel[j].x, oldVel[j].y);
 
@@ -253,7 +250,6 @@ float2 collideCell(int3 gridPos,
 
 	return force;
 }
-
 
 __global__
 void collideD(float4* newVel,               // output: new velocity
@@ -289,8 +285,6 @@ void collideD(float4* newVel,               // output: new velocity
 
 	// collide with cursor sphere
 	/*force += collideSpheres(pos, params.colliderPos, vel, make_float3(0.0f, 0.0f, 0.0f), params.particleRadius, params.colliderRadius, 0.0f);*/
-
-
 
 	// write new velocity back to original unsorted location
 	uint originalIndex = gridParticleIndex[index];

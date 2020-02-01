@@ -73,58 +73,7 @@ class ParticleSystem
             m_solverIterations = i;
         }
 
-        void setDamping(float x)
-        {
-            m_params.globalDamping = x;
-        }
-
-        void setCollideSpring(float x)
-        {
-            m_params.spring = x;
-        }
-        void setCollideDamping(float x)
-        {
-            m_params.damping = x;
-        }
-        void setCollideShear(float x)
-        {
-            m_params.shear = x;
-        }
-        void setCollideAttraction(float x)
-        {
-            m_params.attraction = x;
-        }
-
-        void setColliderPos(float3 x)
-        {
-            m_params.colliderPos = x;
-        }
-
-        float getParticleRadius()
-        {
-            return m_params.particleRadius;
-        }
-        float3 getColliderPos()
-        {
-            return m_params.colliderPos;
-        }
-        float getColliderRadius()
-        {
-            return m_params.colliderRadius;
-        }
-        uint3 getGridSize()
-        {
-            return m_params.gridSize;
-        }
-        float3 getWorldOrigin()
-        {
-            return m_params.worldOrigin;
-        }
-        float3 getCellSize()
-        {
-            return m_params.cellSize;
-        }
-
+        SimParams m_params;
     protected: // methods
         ParticleSystem() {}
         uint createVBO(uint size);
@@ -171,7 +120,6 @@ class ParticleSystem
         struct cudaGraphicsResource *m_cuda_colorvbo_resource; // handles OpenGL-CUDA exchange
 
         // params
-        SimParams m_params;
         uint3 m_gridSize;
         uint m_numGridCells;
 

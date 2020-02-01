@@ -79,6 +79,17 @@ float collideDamping = 0.02f;;
 float collideShear = 0.1f;
 float collideAttraction = 0.0f;
 
+float separationFactor = 1.f;
+float separationRadius = 1.f;
+float alignmentFactor = 1.f;
+float alignmentRadius = 1.f;
+float cohesionFactor = 1.f;
+float cohesionRadius = 1.f;
+float angle = 180.f;
+
+float mouseFactor = 10.f;
+float mouseRadius = 1.f;
+
 ParticleSystem* psystem = 0;
 
 // fps
@@ -108,7 +119,7 @@ void initParticleSystem(int numParticles, uint3 gridSize)
 	psystem->reset();
 
 	renderer = new ParticleRenderer;
-	renderer->setParticleRadius(psystem->getParticleRadius());
+	renderer->setParticleRadius(psystem->m_params.particleRadius);
 	renderer->setColorBuffer(psystem->getColorBuffer());
 
 	sdkCreateTimer(&timer);
@@ -151,7 +162,7 @@ void initGL(int* argc, char** argv)
 #endif
 
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.25, 0.25, 0.25, 1.0);
+	glClearColor(0.1, 0.1, 0.1, 1.0);
 
 	glutReportErrors();
 }
@@ -181,11 +192,11 @@ void display()
 
 	// update the simulation
 	psystem->setIterations(iterations);
-	psystem->setDamping(damping);
-	psystem->setCollideSpring(collideSpring);
-	psystem->setCollideDamping(collideDamping);
-	psystem->setCollideShear(collideShear);
-	psystem->setCollideAttraction(collideAttraction);
+	psystem->m_params.globalDamping = damping;
+	psystem->m_params.spring = collideSpring;
+	psystem->m_params.damping = collideDamping;
+	psystem->m_params.shear = collideShear;
+	psystem->m_params.attraction = collideAttraction;
 
 	psystem->update(timestep);
 
@@ -217,7 +228,7 @@ void display()
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
 	glEnable(GL_BLEND);
-	params->Render(0, 0);
+	params->Render(0, 5);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 
@@ -312,7 +323,6 @@ void motion(int x, int y)
 	ox = x;
 	oy = y;
 
-
 	glutPostRedisplay();
 }
 
@@ -340,11 +350,7 @@ void initParams()
 	params->AddParam(new Param<float>("collide attract", collideAttraction, 0.0f, 0.1f, 0.001f, &collideAttraction));
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program main
-////////////////////////////////////////////////////////////////////////////////
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
 #if defined(__linux__)
 	setenv("DISPLAY", ":0", 0);
@@ -352,33 +358,19 @@ main(int argc, char** argv)
 
 	printf("%s Starting...\n\n", sSDKsample);
 
-	printf("NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.\n\n");
-
 	numParticles = NUM_PARTICLES;
 	uint gridDim = GRID_SIZE;
 	numIterations = 0;
 
 	gridSize.x = gridSize.y = gridSize.z = gridDim;
-	printf("grid: %d x %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.z, gridSize.x * gridSize.y * gridSize.z);
+	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y );
 	printf("particles: %d\n", numParticles);
-
-
-	if (checkCmdLineFlag(argc, (const char**)argv, "device"))
-	{
-		printf("[%s]\n", argv[0]);
-		printf("   Does not explicitly support -device=n in OpenGL mode\n");
-		printf("   To use -device=n, the sample must be running w/o OpenGL\n\n");
-		printf(" > %s -device=n -file=<*.bin>\n", argv[0]);
-		printf("exiting...\n");
-		exit(EXIT_SUCCESS);
-	}
 
 	initGL(&argc, argv);
 	cudaInit(argc, argv);
 
 	initParticleSystem(numParticles, gridSize);
 	initParams();
-
 
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
