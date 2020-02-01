@@ -53,6 +53,7 @@ struct integrate_functor
 		if (pos.y > 1.0f) pos.y = -1.0f;
 		if (pos.y < -1.0f) pos.y = 1.0f;
 
+		
 		// store new position and velocity
 		thrust::get<0>(t) = make_float4(pos.x,pos.y,0, posData.w);
 		thrust::get<1>(t) = make_float4(vel.x, vel.y, 0, velData.w);
@@ -288,6 +289,7 @@ void collideD(float4* newVel,               // output: new velocity
 
 	// collide with cursor sphere
 	/*force += collideSpheres(pos, params.colliderPos, vel, make_float3(0.0f, 0.0f, 0.0f), params.particleRadius, params.colliderRadius, 0.0f);*/
+
 
 
 	// write new velocity back to original unsorted location

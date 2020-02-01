@@ -71,7 +71,6 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
 	m_params.attraction = 0.0f;
 	m_params.boundaryDamping = -0.5f;
 
-	m_params.gravity = make_float3(0.0f, -0.0003f, 0.0f);
 	m_params.globalDamping = 1.0f;
 
 	_initialize(numParticles);

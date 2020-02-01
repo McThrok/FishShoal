@@ -71,7 +71,6 @@ int numIterations = 0; // run until exit
 // simulation parameters
 float timestep = 0.5f;
 float damping = 1.0f;
-float gravity = 0.0003f;
 int iterations = 1;
 int ballr = 10;
 
@@ -183,7 +182,6 @@ void display()
 	// update the simulation
 	psystem->setIterations(iterations);
 	psystem->setDamping(damping);
-	psystem->setGravity(-gravity);
 	psystem->setCollideSpring(collideSpring);
 	psystem->setCollideDamping(collideDamping);
 	psystem->setCollideShear(collideShear);
@@ -334,7 +332,6 @@ void initParams()
 	params = new ParamListGL("misc");
 	params->AddParam(new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f, &timestep));
 	params->AddParam(new Param<float>("damping", damping, 0.0f, 1.0f, 0.001f, &damping));
-	params->AddParam(new Param<float>("gravity", gravity, 0.0f, 0.001f, 0.0001f, &gravity));
 	params->AddParam(new Param<int>("ball radius", ballr, 1, 20, 1, &ballr));
 
 	params->AddParam(new Param<float>("collide spring", collideSpring, 0.0f, 1.0f, 0.001f, &collideSpring));

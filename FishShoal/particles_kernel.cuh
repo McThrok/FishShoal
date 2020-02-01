@@ -21,7 +21,6 @@ struct SimParams
     float3 colliderPos;
     float  colliderRadius;
 
-    float3 gravity;
     float globalDamping;
     float particleRadius;
 
@@ -37,7 +36,7 @@ struct SimParams
     float damping;
     float shear;
     float attraction;
-    //float boundaryDamping;
+    float boundaryDamping;
 };
 
 #endif

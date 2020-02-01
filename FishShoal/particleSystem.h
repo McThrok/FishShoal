@@ -77,10 +77,6 @@ class ParticleSystem
         {
             m_params.globalDamping = x;
         }
-        void setGravity(float x)
-        {
-            m_params.gravity = make_float3(0.0f, x, 0.0f);
-        }
 
         void setCollideSpring(float x)
         {

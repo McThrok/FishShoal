@@ -33,6 +33,7 @@ class ParticleRenderer
         };
 
         void display(DisplayMode mode = PARTICLE_POINTS);
+        void displayGrid();
 
         void setPointSize(float size)
         {
