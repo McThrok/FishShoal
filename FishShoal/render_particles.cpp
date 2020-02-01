@@ -111,7 +111,9 @@ void ParticleRenderer::display(DisplayMode mode /* = PARTICLE_POINTS */)
             glEnable(GL_DEPTH_TEST);
 
             glUseProgram(m_program);
-            glUniform1f(glGetUniformLocation(m_program, "pointScale"), m_window_h / tanf(m_fov*0.5f*(float)M_PI/180.0f));
+            float a = m_window_h / tanf(m_fov * 0.5f * (float)M_PI / 180.0f);
+            glUniform1f(glGetUniformLocation(m_program, "pointScale"), m_window_h / tanf(m_fov * 0.5f * (float)M_PI / 180.0f));
+            glUniform1f(glGetUniformLocation(m_program, "pointScale"),1000);
             glUniform1f(glGetUniformLocation(m_program, "pointRadius"), m_particleRadius);
 
             glColor3f(1, 1, 1);
