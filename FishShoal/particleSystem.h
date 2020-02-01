@@ -23,7 +23,7 @@
 class ParticleSystem
 {
     public:
-        ParticleSystem(uint numParticles, uint3 gridSize, bool bUseOpenGL);
+        ParticleSystem(uint numParticles, uint3 gridSize);
         ~ParticleSystem();
 
         enum ParticleConfig
@@ -40,7 +40,7 @@ class ParticleSystem
         };
 
         void update(float deltaTime);
-        void reset(ParticleConfig config);
+        void reset();
 
         float *getArray(ParticleArray array);
         void   setArray(ParticleArray array, const float *data, int start, int count);
@@ -67,9 +67,6 @@ class ParticleSystem
         {
             return (void *)m_cudaColorVBO;
         }
-
-        void dumpGrid();
-        void dumpParticles(uint start, uint count);
 
         void setIterations(int i)
         {
@@ -132,8 +129,6 @@ class ParticleSystem
             return m_params.cellSize;
         }
 
-        void addSphere(int index, float *pos, float *vel, int r, float spacing);
-
     protected: // methods
         ParticleSystem() {}
         uint createVBO(uint size);
@@ -144,7 +139,7 @@ class ParticleSystem
         void initGrid(uint *size, float spacing, float jitter, uint numParticles);
 
     protected: // data
-        bool m_bInitialized, m_bUseOpenGL;
+        bool m_bInitialized;
         uint m_numParticles;
 
         // CPU data

@@ -56,18 +56,12 @@
 #define THRESHOLD         0.30f
 
 #define GRID_SIZE       64
-#define NUM_PARTICLES   16384
+#define NUM_PARTICLES   1600;
 
 const uint width = 640, height = 480;
 
 // view params
 int ox, oy;
-int buttonState = 0;
-float camera_trans[] = { 0, 0, -3 };
-float camera_rot[] = { 0, 0, 0 };
-float camera_trans_lag[] = { 0, 0, -3 };
-float camera_rot_lag[] = { 0, 0, 0 };
-const float inertia = 0.1f;
 ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
 
 uint numParticles = 0;
@@ -92,7 +86,6 @@ ParticleSystem* psystem = 0;
 static int fpsCount = 0;
 static int fpsLimit = 1;
 StopWatchInterface* timer = NULL;
-
 ParticleRenderer* renderer = 0;
 
 float modelView[16];
@@ -110,17 +103,14 @@ extern "C" void cudaGLInit(int argc, char** argv);
 extern "C" void copyArrayFromDevice(void* host, const void* device, unsigned int vbo, int size);
 
 // initialize particle system
-void initParticleSystem(int numParticles, uint3 gridSize, bool bUseOpenGL)
+void initParticleSystem(int numParticles, uint3 gridSize)
 {
-	psystem = new ParticleSystem(numParticles, gridSize, bUseOpenGL);
-	psystem->reset(ParticleSystem::CONFIG_GRID);
+	psystem = new ParticleSystem(numParticles, gridSize);
+	psystem->reset();
 
-	if (bUseOpenGL)
-	{
-		renderer = new ParticleRenderer;
-		renderer->setParticleRadius(psystem->getParticleRadius());
-		renderer->setColorBuffer(psystem->getColorBuffer());
-	}
+	renderer = new ParticleRenderer;
+	renderer->setParticleRadius(psystem->getParticleRadius());
+	renderer->setColorBuffer(psystem->getColorBuffer());
 
 	sdkCreateTimer(&timer);
 }
@@ -165,25 +155,6 @@ void initGL(int* argc, char** argv)
 	glClearColor(0.25, 0.25, 0.25, 1.0);
 
 	glutReportErrors();
-}
-
-void runBenchmark(int iterations, char* exec_path)
-{
-	printf("Run %u particles simulation for %d iterations...\n\n", numParticles, iterations);
-	cudaDeviceSynchronize();
-	sdkStartTimer(&timer);
-
-	for (int i = 0; i < iterations; ++i)
-	{
-		psystem->update(timestep);
-	}
-
-	cudaDeviceSynchronize();
-	sdkStopTimer(&timer);
-	float fAvgSeconds = ((float)1.0e-3 * (float)sdkGetTimerValue(&timer) / (float)iterations);
-
-	printf("particles, Throughput = %.4f KParticles/s, Time = %.5f s, Size = %u particles, NumDevsUsed = %u, Workgroup = %u\n",
-		(1.0e-3 * numParticles) / fAvgSeconds, fAvgSeconds, numParticles, 1, 0);
 }
 
 void computeFPS()
@@ -231,30 +202,13 @@ void display()
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-	for (int c = 0; c < 3; ++c)
-	{
-		camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c]) * inertia;
-		camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
-	}
-
-	glTranslatef(camera_trans_lag[0], camera_trans_lag[1], camera_trans_lag[2]);
-	glRotatef(camera_rot_lag[0], 1.0, 0.0, 0.0);
-	glRotatef(camera_rot_lag[1], 0.0, 1.0, 0.0);
+	glTranslatef(0, 0, -3);
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
 	// cube
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(2.0);
-
-	//// collider
-	//glPushMatrix();
-	//float3 p = psystem->getColliderPos();
-	//glTranslatef(p.x, p.y, p.z);
-	//glColor3f(1.0, 0.0, 0.0);
-	//glutSolidSphere(psystem->getColliderRadius(), 20, 10);
-	//glPopMatrix();
 
 	if (renderer)
 	{
@@ -303,28 +257,6 @@ void reshape(int w, int h)
 
 void mouse(int button, int state, int x, int y)
 {
-	int mods;
-
-	if (state == GLUT_DOWN)
-	{
-		buttonState |= 1 << button;
-	}
-	else if (state == GLUT_UP)
-	{
-		buttonState = 0;
-	}
-
-	mods = glutGetModifiers();
-
-	if (mods & GLUT_ACTIVE_SHIFT)
-	{
-		buttonState = 2;
-	}
-	else if (mods & GLUT_ACTIVE_CTRL)
-	{
-		buttonState = 3;
-	}
-
 	ox = x;
 	oy = y;
 
@@ -433,58 +365,34 @@ main(int argc, char** argv)
 	printf("grid: %d x %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.z, gridSize.x * gridSize.y * gridSize.z);
 	printf("particles: %d\n", numParticles);
 
-	bool benchmark = checkCmdLineFlag(argc, (const char**)argv, "benchmark") != 0;
 
-	if (checkCmdLineFlag(argc, (const char**)argv, "i"))
+	if (checkCmdLineFlag(argc, (const char**)argv, "device"))
 	{
-		numIterations = getCmdLineArgumentInt(argc, (const char**)argv, "i");
+		printf("[%s]\n", argv[0]);
+		printf("   Does not explicitly support -device=n in OpenGL mode\n");
+		printf("   To use -device=n, the sample must be running w/o OpenGL\n\n");
+		printf(" > %s -device=n -file=<*.bin>\n", argv[0]);
+		printf("exiting...\n");
+		exit(EXIT_SUCCESS);
 	}
 
-	if (benchmark)
-	{
-		cudaInit(argc, argv);
-	}
-	else
-	{
-		if (checkCmdLineFlag(argc, (const char**)argv, "device"))
-		{
-			printf("[%s]\n", argv[0]);
-			printf("   Does not explicitly support -device=n in OpenGL mode\n");
-			printf("   To use -device=n, the sample must be running w/o OpenGL\n\n");
-			printf(" > %s -device=n -file=<*.bin>\n", argv[0]);
-			printf("exiting...\n");
-			exit(EXIT_SUCCESS);
-		}
+	initGL(&argc, argv);
+	cudaInit(argc, argv);
 
-		initGL(&argc, argv);
-		cudaInit(argc, argv);
-	}
-
-	initParticleSystem(numParticles, gridSize, !benchmark);
+	initParticleSystem(numParticles, gridSize);
 	initParams();
 
-	if (benchmark)
-	{
-		if (numIterations <= 0)
-		{
-			numIterations = 300;
-		}
 
-		runBenchmark(numIterations, argv[0]);
-	}
-	else
-	{
-		glutDisplayFunc(display);
-		glutReshapeFunc(reshape);
-		glutMouseFunc(mouse);
-		glutMotionFunc(motion);
-		glutSpecialFunc(special);
-		glutIdleFunc(idle);
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
+	glutSpecialFunc(special);
+	glutIdleFunc(idle);
 
-		glutCloseFunc(cleanup);
+	glutCloseFunc(cleanup);
 
-		glutMainLoop();
-	}
+	glutMainLoop();
 
 	if (psystem)
 	{
@@ -493,4 +401,3 @@ main(int argc, char** argv)
 
 	exit(g_TotalErrors > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-
