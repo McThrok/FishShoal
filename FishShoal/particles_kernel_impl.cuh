@@ -42,69 +42,30 @@ struct integrate_functor
 	{
 		volatile float4 posData = thrust::get<0>(t);
 		volatile float4 velData = thrust::get<1>(t);
-		float3 pos = make_float3(posData.x, posData.y, posData.z);
-		float3 vel = make_float3(velData.x, velData.y, velData.z);
+		float2 pos = make_float2(posData.x, posData.y);
+		float2 vel = make_float2(velData.x, velData.y);
 
-		vel += params.gravity * deltaTime;
-		vel *= params.globalDamping;
-
-		// new position = old position + velocity * deltaTime
 		pos += vel * deltaTime;
 
-		// set this to zero to disable collisions with cube sides
-#if 1
+		if (pos.x > 1.0f) pos.x = -1.0f;
+		if (pos.x < -1.0f) pos.x = 1.0f;
 
-		if (pos.x > 1.0f - params.particleRadius)
-		{
-			pos.x = 1.0f - params.particleRadius;
-			vel.x *= params.boundaryDamping;
-		}
-
-		if (pos.x < -1.0f + params.particleRadius)
-		{
-			pos.x = -1.0f + params.particleRadius;
-			vel.x *= params.boundaryDamping;
-		}
-
-		if (pos.y > 1.0f - params.particleRadius)
-		{
-			pos.y = 1.0f - params.particleRadius;
-			vel.y *= params.boundaryDamping;
-		}
-
-		if (pos.z > 1.0f - params.particleRadius)
-		{
-			pos.z = 1.0f - params.particleRadius;
-			vel.z *= params.boundaryDamping;
-		}
-
-		if (pos.z < -1.0f + params.particleRadius)
-		{
-			pos.z = -1.0f + params.particleRadius;
-			vel.z *= params.boundaryDamping;
-		}
-
-#endif
-
-		if (pos.y < -1.0f + params.particleRadius)
-		{
-			pos.y = -1.0f + params.particleRadius;
-			vel.y *= params.boundaryDamping;
-		}
+		if (pos.y > 1.0f) pos.y = -1.0f;
+		if (pos.y < -1.0f) pos.y = 1.0f;
 
 		// store new position and velocity
-		thrust::get<0>(t) = make_float4(pos, posData.w);
-		thrust::get<1>(t) = make_float4(vel, velData.w);
+		thrust::get<0>(t) = make_float4(pos.x,pos.y,0, posData.w);
+		thrust::get<1>(t) = make_float4(vel.x, vel.y, 0, velData.w);
 	}
 };
 
 // calculate position in uniform grid
-__device__ int3 calcGridPos(float3 p)
+__device__ int3 calcGridPos(float2 p)
 {
 	int3 gridPos;
 	gridPos.x = floor((p.x - params.worldOrigin.x) / params.cellSize.x);
 	gridPos.y = floor((p.y - params.worldOrigin.y) / params.cellSize.y);
-	gridPos.z = floor((p.z - params.worldOrigin.z) / params.cellSize.z);
+	gridPos.z = 0;
 	return gridPos;
 }
 
@@ -131,7 +92,7 @@ void calcHashD(uint* gridParticleHash,  // output
 	volatile float4 p = pos[index];
 
 	// get address in grid
-	int3 gridPos = calcGridPos(make_float3(p.x, p.y, p.z));
+	int3 gridPos = calcGridPos(make_float2(p.x, p.y));
 	uint hash = calcGridHash(gridPos);
 
 	// store grid hash and particle index
@@ -213,28 +174,28 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 
 // collide two spheres using DEM method
 __device__
-float3 collideSpheres(float3 posA, float3 posB,
-	float3 velA, float3 velB,
+float2 collideSpheres(float2 posA, float2 posB,
+	float2 velA, float2 velB,
 	float radiusA, float radiusB,
 	float attraction)
 {
 	// calculate relative position
-	float3 relPos = posB - posA;
+	float2 relPos = posB - posA;
 
 	float dist = length(relPos);
 	float collideDist = radiusA + radiusB;
 
-	float3 force = make_float3(0.0f);
+	float2 force = make_float2(0.0f);
 
 	if (dist < collideDist)
 	{
-		float3 norm = relPos / dist;
+		float2 norm = relPos / dist;
 
 		// relative velocity
-		float3 relVel = velB - velA;
+		float2 relVel = velB - velA;
 
 		// relative tangential velocity
-		float3 tanVel = relVel - (dot(relVel, norm) * norm);
+		float2 tanVel = relVel - (dot(relVel, norm) * norm);
 
 		// spring force
 		force = -params.spring * (collideDist - dist) * norm;
@@ -252,10 +213,10 @@ float3 collideSpheres(float3 posA, float3 posB,
 
 // collide a particle against all other particles in a given cell
 __device__
-float3 collideCell(int3    gridPos,
+float2 collideCell(int3 gridPos,
 	uint    index,
-	float3  pos,
-	float3  vel,
+	float2  pos,
+	float2  vel,
 	float4* oldPos,
 	float4* oldVel,
 	uint* cellStart,
@@ -266,7 +227,7 @@ float3 collideCell(int3    gridPos,
 	// get start of bucket for this cell
 	uint startIndex = cellStart[gridHash];
 
-	float3 force = make_float3(0.0f);
+	float2 force = make_float2(0.0f);
 
 	if (startIndex != 0xffffffff)          // cell is not empty
 	{
@@ -277,10 +238,11 @@ float3 collideCell(int3    gridPos,
 		{
 			if (j != index)                // check not colliding with self
 			{
-				float3 pos2 = make_float3(oldPos[j]);
-				float3 vel2 = make_float3(oldVel[j]);
-				pos2.z = 0;
-				vel2.z = 0;
+				/*	float3 pos2 = make_float3(oldPos[j]);
+					float3 vel2 = make_float3(oldVel[j]);*/
+
+				float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y);
+				float2 vel2 = make_float2(oldVel[j].x, oldVel[j].y);
 
 				// collide two spheres
 				force += collideSpheres(pos, pos2, vel, vel2, params.particleRadius, params.particleRadius, params.attraction);
@@ -306,14 +268,14 @@ void collideD(float4* newVel,               // output: new velocity
 	if (index >= numParticles) return;
 
 	// read particle data from sorted arrays
-	float3 pos = make_float3(oldPos[index]);
-	float3 vel = make_float3(oldVel[index]);
+	float2 pos = make_float2(oldPos[index].x, oldPos[index].y);
+	float2 vel = make_float2(oldVel[index].x, oldVel[index].y);
 
 	// get address in grid
 	int3 gridPos = calcGridPos(pos);
 
 	// examine neighbouring cells
-	float3 force = make_float3(0.0f);
+	float2 force = make_float2(0.0f);
 
 	for (int y = -1; y <= 1; y++)
 	{
@@ -325,11 +287,13 @@ void collideD(float4* newVel,               // output: new velocity
 	}
 
 	// collide with cursor sphere
-	force += collideSpheres(pos, params.colliderPos, vel, make_float3(0.0f, 0.0f, 0.0f), params.particleRadius, params.colliderRadius, 0.0f);
+	/*force += collideSpheres(pos, params.colliderPos, vel, make_float3(0.0f, 0.0f, 0.0f), params.particleRadius, params.colliderRadius, 0.0f);*/
+
 
 	// write new velocity back to original unsorted location
 	uint originalIndex = gridParticleIndex[index];
-	newVel[originalIndex] = make_float4(vel + force, 0.0f);
+	float2 new_vel = vel + force;
+	newVel[originalIndex] = make_float4(new_vel.x, new_vel.y, 0.0f, 0.0f);
 }
 
 #endif

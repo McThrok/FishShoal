@@ -37,7 +37,7 @@ struct SimParams
     float damping;
     float shear;
     float attraction;
-    float boundaryDamping;
+    //float boundaryDamping;
 };
 
 #endif

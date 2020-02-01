@@ -242,7 +242,7 @@ void reshape(int w, int h)
 	glLoadIdentity();
 
 	gluPerspective(60.0, (float)w / (float)h, 0.1, 100.0);
-	//gluOrtho2D(0, w, 0, h);
+	//gluOrtho2D(-1, 0, -1, 0);
 	//gluOrtho2D(-1000, w, -1000, h);
 
 	glMatrixMode(GL_MODELVIEW);
