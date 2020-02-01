@@ -41,34 +41,36 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
 	m_dPos(0),
 	m_dVel(0),
 	m_gridSize(gridSize),
-	m_timer(NULL),
-	m_solverIterations(1)
+	m_timer(NULL)
 {
 	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
 
 	m_gridSortBits = 18;    // increase this for larger grids
 
 	// set simulation parameters
-	m_params.gridSize = m_gridSize;
-	m_params.numCells = m_numGridCells;
-	m_params.numBodies = m_numParticles;
+	params.gridSize = m_gridSize;
+	params.numCells = m_numGridCells;
+	params.numBodies = m_numParticles;
 
-	m_params.particleRadius = 1.0f / 64.0f;
+	params.particleRadius = 1.0f / 64.0f;
 
 	//use for mouse
-	m_params.mousePos = make_float2(-1.2f, -0.8f);
-	m_params.mouseRadius = 0.2f;
+	params.mousePos = make_float2(-1.2f, -0.8f);
+	params.mouseRadius = 0.2f;
 
-	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
-	float cellSize = m_params.particleRadius * 2.0f;  // cell size equal to particle diameter
-	m_params.cellSize = make_float3(cellSize, cellSize, cellSize);
+	params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
+	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
+	params.cellSize = make_float3(cellSize, cellSize, cellSize);
 
-	m_params.spring = 0.5f;
-	m_params.damping = 0.02f;
-	m_params.shear = 0.1f;
-	m_params.attraction = 0.0f;
-	m_params.boundaryDamping = -0.5f;
-	m_params.globalDamping = 1.0f;
+	params.separationFactor = 1.f;
+	params.separationRadius = 1.f;
+	params.alignmentFactor = 1.f;
+	params.alignmentRadius = 1.f;
+	params.cohesionFactor = 1.f;
+	params.cohesionRadius = 1.f;
+	params.visionAngle = 180.f;
+	params.mouseFactor = 10.f;
+	params.mouseRadius = 1.f;
 
 	_initialize(numParticles);
 }
@@ -182,7 +184,7 @@ ParticleSystem::_initialize(int numParticles)
 
 	sdkCreateTimer(&m_timer);
 
-	setParameters(&m_params);
+	setParameters(&params);
 
 	m_bInitialized = true;
 }
@@ -206,7 +208,6 @@ ParticleSystem::_finalize()
 	freeArray(m_dCellStart);
 	freeArray(m_dCellEnd);
 
-
 	unregisterGLBufferObject(m_cuda_colorvbo_resource);
 	unregisterGLBufferObject(m_cuda_posvbo_resource);
 	glDeleteBuffers(1, (const GLuint*)&m_posVbo);
@@ -224,7 +225,7 @@ ParticleSystem::update(float deltaTime)
 	dPos = (float*)mapGLBufferObject(&m_cuda_posvbo_resource);
 
 	// update constants
-	setParameters(&m_params);
+	setParameters(&params);
 
 	// integrate
 	integrateSystem(
@@ -269,7 +270,7 @@ ParticleSystem::update(float deltaTime)
 		m_numGridCells);
 
 	// note: do unmap at end here to avoid unnecessary graphics/CUDA context switch
-		unmapGLBufferObject(m_cuda_posvbo_resource);
+	unmapGLBufferObject(m_cuda_posvbo_resource);
 }
 
 float*
@@ -310,12 +311,11 @@ ParticleSystem::setArray(ParticleArray array, const float* data, int start, int 
 	default:
 	case POSITION:
 	{
-		
-			unregisterGLBufferObject(m_cuda_posvbo_resource);
-			glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
-			glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float), count * 4 * sizeof(float), data);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
+		unregisterGLBufferObject(m_cuda_posvbo_resource);
+		glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
+		glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float), count * 4 * sizeof(float), data);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 	}
 	break;
 
@@ -331,43 +331,36 @@ inline float frand()
 }
 
 void
-ParticleSystem::initGrid(uint* size, float spacing, float jitter, uint numParticles)
+ParticleSystem::initGrid(uint* size, uint numParticles)
 {
 	srand(1973);
+	int p = 0, v = 0;
 
-	for (uint y = 0; y < size[1]; y++)
+	for (uint i = 0; i < m_numParticles; i++)
 	{
-		for (uint x = 0; x < size[0]; x++)
-		{
-			uint i = (y * size[0]) + x;
+		float px = frand();
+		float py = frand();
+		m_hPos[p++] = 2 * (px - 0.5f);
+		m_hPos[p++] = 2 * (py - 0.5f);
+		m_hPos[p++] = 0;
+		m_hPos[p++] = 1.0f; // radius
 
-			if (i < numParticles)
-			{
-				m_hPos[i * 4] = (spacing * x) + m_params.particleRadius - 1.0f + (frand() * 2.0f - 1.0f) * jitter;
-				m_hPos[i * 4 + 1] = (spacing * y) + m_params.particleRadius - 1.0f + (frand() * 2.0f - 1.0f) * jitter;
-				m_hPos[i * 4 + 2] = 0;
-				m_hPos[i * 4 + 3] = 1.0f;
-
-				m_hVel[i * 4] = 0.0f;
-				m_hVel[i * 4 + 1] = 0.0f;
-				m_hVel[i * 4 + 2] = 0.0f;
-				m_hVel[i * 4 + 3] = 0.0f;
-			}
-		}
+		m_hVel[v++] = 0.0f;
+		m_hVel[v++] = 0.0f;
+		m_hVel[v++] = 0.0f;
+		m_hVel[v++] = 0.0f;
 	}
 }
 
 void
 ParticleSystem::reset()
 {
-	float jitter = m_params.particleRadius * 0.01f;
-	uint s = (int)ceilf(powf((float)m_numParticles, 1.0f / 2.0f));
+	uint s = (int)ceilf(sqrtf(m_numParticles));
 	uint gridSize[3];
 	gridSize[0] = gridSize[1] = s;
 	gridSize[2] = 1;
-	initGrid(gridSize, m_params.particleRadius * 2.0f, jitter, m_numParticles);
+	initGrid(gridSize, m_numParticles);
 
 	setArray(POSITION, m_hPos, 0, m_numParticles);
 	setArray(VELOCITY, m_hVel, 0, m_numParticles);
 }
-

@@ -68,12 +68,8 @@ class ParticleSystem
             return (void *)m_cudaColorVBO;
         }
 
-        void setIterations(int i)
-        {
-            m_solverIterations = i;
-        }
 
-        SimParams m_params;
+        SimParams params;
     protected: // methods
         ParticleSystem() {}
         uint createVBO(uint size);
@@ -81,7 +77,7 @@ class ParticleSystem
         void _initialize(int numParticles);
         void _finalize();
 
-        void initGrid(uint *size, float spacing, float jitter, uint numParticles);
+        void initGrid(uint *size, uint numParticles);
 
     protected: // data
         bool m_bInitialized;
@@ -124,8 +120,6 @@ class ParticleSystem
         uint m_numGridCells;
 
         StopWatchInterface *m_timer;
-
-        uint m_solverIterations;
 };
 
 #endif // __PARTICLESYSTEM_H__

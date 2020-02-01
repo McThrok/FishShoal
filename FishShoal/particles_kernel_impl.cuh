@@ -173,83 +173,83 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 
 }
 
-// collide two spheres using DEM method
-__device__
-float2 collideSpheres(float2 posA, float2 posB,
-	float2 velA, float2 velB,
-	float radiusA, float radiusB,
-	float attraction)
-{
-	// calculate relative position
-	float2 relPos = posB - posA;
+//// collide two spheres using DEM method
+//__device__
+//float2 collideSpheres(float2 posA, float2 posB,
+//	float2 velA, float2 velB,
+//	float radiusA, float radiusB,
+//	float attraction)
+//{
+//	// calculate relative position
+//	float2 relPos = posB - posA;
+//
+//	float dist = length(relPos);
+//	float collideDist = radiusA + radiusB;
+//
+//	float2 force = make_float2(0.0f);
+//
+//	if (dist < collideDist)
+//	{
+//		float2 norm = relPos / dist;
+//
+//		// relative velocity
+//		float2 relVel = velB - velA;
+//
+//		// relative tangential velocity
+//		float2 tanVel = relVel - (dot(relVel, norm) * norm);
+//
+//		// spring force
+//		force = -params.spring * (collideDist - dist) * norm;
+//		// dashpot (damping) force
+//		force += params.damping * relVel;
+//		// tangential shear force
+//		force += params.shear * tanVel;
+//		// attraction
+//		force += attraction * relPos;
+//	}
+//
+//	return force;
+//}
 
-	float dist = length(relPos);
-	float collideDist = radiusA + radiusB;
 
-	float2 force = make_float2(0.0f);
-
-	if (dist < collideDist)
-	{
-		float2 norm = relPos / dist;
-
-		// relative velocity
-		float2 relVel = velB - velA;
-
-		// relative tangential velocity
-		float2 tanVel = relVel - (dot(relVel, norm) * norm);
-
-		// spring force
-		force = -params.spring * (collideDist - dist) * norm;
-		// dashpot (damping) force
-		force += params.damping * relVel;
-		// tangential shear force
-		force += params.shear * tanVel;
-		// attraction
-		force += attraction * relPos;
-	}
-
-	return force;
-}
-
-
-// collide a particle against all other particles in a given cell
-__device__
-float2 collideCell(int3 gridPos,
-	uint    index,
-	float2  pos,
-	float2  vel,
-	float4* oldPos,
-	float4* oldVel,
-	uint* cellStart,
-	uint* cellEnd)
-{
-	uint gridHash = calcGridHash(gridPos);
-
-	// get start of bucket for this cell
-	uint startIndex = cellStart[gridHash];
-
-	float2 force = make_float2(0.0f);
-
-	if (startIndex != 0xffffffff)          // cell is not empty
-	{
-		// iterate over particles in this cell
-		uint endIndex = cellEnd[gridHash];
-
-		for (uint j = startIndex; j < endIndex; j++)
-		{
-			if (j != index)                // check not colliding with self
-			{
-				float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y);
-				float2 vel2 = make_float2(oldVel[j].x, oldVel[j].y);
-
-				// collide two spheres
-				force += collideSpheres(pos, pos2, vel, vel2, params.particleRadius, params.particleRadius, params.attraction);
-			}
-		}
-	}
-
-	return force;
-}
+//// collide a particle against all other particles in a given cell
+//__device__
+//float2 collideCell(int3 gridPos,
+//	uint    index,
+//	float2  pos,
+//	float2  vel,
+//	float4* oldPos,
+//	float4* oldVel,
+//	uint* cellStart,
+//	uint* cellEnd)
+//{
+//	uint gridHash = calcGridHash(gridPos);
+//
+//	// get start of bucket for this cell
+//	uint startIndex = cellStart[gridHash];
+//
+//	float2 force = make_float2(0.0f);
+//
+//	if (startIndex != 0xffffffff)          // cell is not empty
+//	{
+//		// iterate over particles in this cell
+//		uint endIndex = cellEnd[gridHash];
+//
+//		for (uint j = startIndex; j < endIndex; j++)
+//		{
+//			if (j != index)                // check not colliding with self
+//			{
+//				float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y);
+//				float2 vel2 = make_float2(oldVel[j].x, oldVel[j].y);
+//
+//				// collide two spheres
+//				force += collideSpheres(pos, pos2, vel, vel2, params.particleRadius, params.particleRadius, params.attraction);
+//			}
+//		}
+//	}
+//
+//	return force;
+//}
 
 __global__
 void collideD(float4* newVel,               // output: new velocity
@@ -279,7 +279,7 @@ void collideD(float4* newVel,               // output: new velocity
 		for (int x = -1; x <= 1; x++)
 		{
 			int3 neighbourPos = gridPos + make_int3(x, y, 0);
-			force += collideCell(neighbourPos, index, pos, vel, oldPos, oldVel, cellStart, cellEnd);
+			//force += collideCell(neighbourPos, index, pos, vel, oldPos, oldVel, cellStart, cellEnd);
 		}
 	}
 

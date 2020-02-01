@@ -18,25 +18,27 @@ typedef unsigned int uint;
 // simulation parameters
 struct SimParams
 {
-    float2 mousePos;
-    float  mouseRadius;
+	float particleRadius;
 
-    float globalDamping;
-    float particleRadius;
+	uint3 gridSize;
+	uint numCells;
+	float3 worldOrigin;
+	float3 cellSize;
 
-    uint3 gridSize;
-    uint numCells;
-    float3 worldOrigin;
-    float3 cellSize;
+	uint numBodies;
+	uint maxParticlesPerCell;
 
-    uint numBodies;
-    uint maxParticlesPerCell;
+	float separationFactor;
+	float separationRadius;
+	float alignmentFactor;
+	float alignmentRadius;
+	float cohesionFactor;
+	float cohesionRadius;
+	float visionAngle;
 
-    float spring;
-    float damping;
-    float shear;
-    float attraction;
-    float boundaryDamping;
+	float mouseFactor;
+	float mouseRadius;
+	float2 mousePos;
 };
 
 #endif

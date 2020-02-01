@@ -58,7 +58,7 @@
 #define GRID_SIZE       64
 #define NUM_PARTICLES   1600;
 
-const uint width = 640, height = 480;
+const uint width = 1300, height = 900;
 
 // view params
 int ox, oy;
@@ -66,18 +66,9 @@ ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
 
 uint numParticles = 0;
 uint3 gridSize;
-int numIterations = 0; // run until exit
 
 // simulation parameters
 float timestep = 0.5f;
-float damping = 1.0f;
-int iterations = 1;
-int ballr = 10;
-
-float collideSpring = 0.5f;;
-float collideDamping = 0.02f;;
-float collideShear = 0.1f;
-float collideAttraction = 0.0f;
 
 float separationFactor = 1.f;
 float separationRadius = 1.f;
@@ -85,7 +76,7 @@ float alignmentFactor = 1.f;
 float alignmentRadius = 1.f;
 float cohesionFactor = 1.f;
 float cohesionRadius = 1.f;
-float angle = 180.f;
+float visionAngle = 180.f;
 
 float mouseFactor = 10.f;
 float mouseRadius = 1.f;
@@ -119,7 +110,7 @@ void initParticleSystem(int numParticles, uint3 gridSize)
 	psystem->reset();
 
 	renderer = new ParticleRenderer;
-	renderer->setParticleRadius(psystem->m_params.particleRadius);
+	renderer->setParticleRadius(psystem->params.particleRadius);
 	renderer->setColorBuffer(psystem->getColorBuffer());
 
 	sdkCreateTimer(&timer);
@@ -191,12 +182,15 @@ void display()
 	sdkStartTimer(&timer);
 
 	// update the simulation
-	psystem->setIterations(iterations);
-	psystem->m_params.globalDamping = damping;
-	psystem->m_params.spring = collideSpring;
-	psystem->m_params.damping = collideDamping;
-	psystem->m_params.shear = collideShear;
-	psystem->m_params.attraction = collideAttraction;
+	psystem->params.separationFactor = separationFactor;
+	psystem->params.separationRadius = separationRadius;
+	psystem->params.alignmentFactor = alignmentFactor;
+	psystem->params.alignmentRadius = alignmentRadius;
+	psystem->params.cohesionFactor = cohesionFactor;
+	psystem->params.cohesionRadius = cohesionRadius;
+	psystem->params.visionAngle = visionAngle;
+	psystem->params.mouseFactor = mouseFactor;
+	psystem->params.mouseRadius = mouseRadius;
 
 	psystem->update(timestep);
 
@@ -341,13 +335,18 @@ void initParams()
 	// create a new parameter list
 	params = new ParamListGL("misc");
 	params->AddParam(new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f, &timestep));
-	params->AddParam(new Param<float>("damping", damping, 0.0f, 1.0f, 0.001f, &damping));
-	params->AddParam(new Param<int>("ball radius", ballr, 1, 20, 1, &ballr));
 
-	params->AddParam(new Param<float>("collide spring", collideSpring, 0.0f, 1.0f, 0.001f, &collideSpring));
-	params->AddParam(new Param<float>("collide damping", collideDamping, 0.0f, 0.1f, 0.001f, &collideDamping));
-	params->AddParam(new Param<float>("collide shear", collideShear, 0.0f, 0.1f, 0.001f, &collideShear));
-	params->AddParam(new Param<float>("collide attract", collideAttraction, 0.0f, 0.1f, 0.001f, &collideAttraction));
+	params->AddParam(new Param<float>("separation factor", separationFactor, 0.0f, 1.0f, 0.001f, &separationFactor));
+	params->AddParam(new Param<float>("alignment factor", separationFactor, 0.0f, 1.0f, 0.001f, &alignmentFactor));
+	params->AddParam(new Param<float>("cohesion factor", separationFactor, 0.0f, 1.0f, 0.001f, &cohesionFactor));
+	params->AddParam(new Param<float>("separation radius", separationFactor, 0.0f, 1.0f, 0.001f, &separationRadius));
+	params->AddParam(new Param<float>("alignment radius", separationFactor, 0.0f, 1.0f, 0.001f, &alignmentRadius));
+	params->AddParam(new Param<float>("cohesion radius", separationFactor, 0.0f, 1.0f, 0.001f, &cohesionRadius));
+
+	params->AddParam(new Param<float>("mouse radius", separationFactor, 0.0f, 1.0f, 0.001f, &mouseRadius));
+	params->AddParam(new Param<float>("mouse factor", separationFactor, 0.0f, 1.0f, 0.001f, &mouseFactor));
+
+	params->AddParam(new Param<float>("vision angle", visionAngle, 0.0f, 180.0f, 1.f, &visionAngle));
 }
 
 int main(int argc, char** argv)
@@ -360,7 +359,6 @@ int main(int argc, char** argv)
 
 	numParticles = NUM_PARTICLES;
 	uint gridDim = GRID_SIZE;
-	numIterations = 0;
 
 	gridSize.x = gridSize.y = gridSize.z = gridDim;
 	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y );
