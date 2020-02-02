@@ -44,18 +44,17 @@ struct integrate_functor
 		volatile float4 posData = thrust::get<0>(t);
 		volatile float4 velData = thrust::get<1>(t);
 		float2 pos = make_float2(posData.x, posData.y);
-		float2 vel = make_float2(velData.x, velData.y);
+		float2 vel = limit(make_float2(velData.x, velData.y), params.maxSpeed);
 
 		pos += vel * deltaTime;
 
-		float sq = params.squareSize / 2;
+		float sqs = params.squareSize / 2;
 
-		if (pos.x > sq) pos.x = -sq;
-		if (pos.x < -sq) pos.x = sq;
+		if (pos.x > sqs) pos.x = -sqs;
+		if (pos.x < -sqs) pos.x = sqs;
 
-		if (pos.y > sq) pos.y = -sq;
-		if (pos.y < -sq) pos.y = sq;
-
+		if (pos.y > sqs) pos.y = -sqs;
+		if (pos.y < -sqs) pos.y = sqs;
 
 		// store new position and velocity
 		thrust::get<0>(t) = make_float4(pos.x, pos.y, 0, posData.w);
@@ -250,13 +249,18 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 //	return force;
 //}
 
-__device__ void limit(float2& v, float l)
+__device__ float2 limit(float2 v, float l)
 {
 	float dist = length(v);
-	if (dist > l)
-		v = (v / dist) * l;
+	return dist <= l ? v : (v / dist) * l;
 }
 
+__device__ float angleBetween(float2 v1, float2 v2)
+{
+	float d1 = length(v1);
+	float d2 = length(v2);
+	return (v1.x * v2.y - v1.y * v2.x) / d1 / d2;
+}
 
 __device__
 float2 calculateAcceleration(
@@ -287,9 +291,6 @@ float2 calculateAcceleration(
 			if (neightbourGrid.y == -1) { neightbourGrid.y = params.gridSize.y - 1; offset.y -= params.squareSize; }
 			else if (neightbourGrid.y == params.gridSize.y) { neightbourGrid.y = 0; offset.y += params.squareSize; }
 
-			//if (offset.x == 0 && offset.y == 0)
-			//	continue;
-
 			uint gridHash = calcGridHash(neightbourGrid);
 
 			// get start of bucket for this cell
@@ -302,17 +303,26 @@ float2 calculateAcceleration(
 
 				for (uint j = startIndex; j < endIndex; j++)
 				{
-					if (j != index)                // check not colliding with self
+					if (j == index) continue;               // check not colliding with self
+
+					float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y) + offset;
+					float2 toVec = pos2 - pos;
+					float dist = length(toVec);
+					float r = params.particleRadius;
+
+					if (r > dist) continue;
+
+					float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
+					float cosToVec = angleBetween(toVec, vel);
+
+					if (cosVision > cosToVec) continue;
+
+					if (r * params.separationRadius <= dist)
 					{
-						float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y) + offset;
-						float2 toVec = pos2 - pos;
-						float dist = length(toVec);
-						if (params.particleRadius <= dist)
-						{
-							sep_n++;
-							sep_sum += toVec / dist / dist;
-						}
+						sep_n++;
+						sep_sum -= toVec / dist / dist;
 					}
+
 				}
 			}
 		}
@@ -321,17 +331,13 @@ float2 calculateAcceleration(
 	float2 sep_acc = make_float2(0, 0);
 	{
 		if (sep_n)
-			sep_acc = -sep_sum / sep_n;
+			sep_acc = sep_sum / sep_n;
 
 		if (length(sep_acc) > eps)
-		{
-			sep_acc = (normalize(sep_acc) * params.maxSpeed) - vel;
-			if (length(sep_acc) > params.maxAcceleration)
-				sep_acc = normalize(sep_acc) * params.maxAcceleration;
-		}
+			sep_acc = limit(sep_acc - vel, params.maxAcceleration);
+
 		sep_acc *= params.separationFactor;
 	}
-
 
 	return sep_acc;
 }
@@ -358,8 +364,7 @@ void collideD(float4* newVel,               // output: new velocity
 
 	// write new velocity back to original unsorted location
 	uint originalIndex = gridParticleIndex[index];
-	float2 new_vel = vel + acc;
-	limit(new_vel, 1);
+	float2 new_vel = limit(vel + acc, params.maxSpeed);
 	newVel[originalIndex] = make_float4(new_vel.x, new_vel.y, 0.0f, 0.0f);
 }
 

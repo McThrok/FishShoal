@@ -57,7 +57,6 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	params.mousePos = make_float2(-1.2f, -0.8f);
 	params.mouseRadius = 0.2f;
 
-	//params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	params.worldOrigin = make_float2(-params.squareSize / 2, -params.squareSize / 2);
 	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
 	params.cellSize = make_float2(cellSize, cellSize);

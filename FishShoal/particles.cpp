@@ -55,7 +55,7 @@
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
 
-#define GRID_SIZE       64*8
+#define GRID_SIZE 32
 #define NUM_PARTICLES   16*16;
 
 const uint width = 1300, height = 900;
@@ -211,7 +211,7 @@ void display()
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -squareSize/2);
+	glTranslatef(0, 0, -squareSize / 2);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
 	// cube
@@ -368,7 +368,7 @@ int main(int argc, char** argv)
 	uint gridDim = GRID_SIZE;
 
 	gridSize.x = gridSize.y = gridDim;
-	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y );
+	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y);
 	printf("particles: %d\n", numParticles);
 
 	initGL(&argc, argv);
