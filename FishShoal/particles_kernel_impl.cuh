@@ -48,11 +48,13 @@ struct integrate_functor
 
 		pos += vel * deltaTime;
 
-		if (pos.x > 100.0f) pos.x = -100.0f;
-		if (pos.x < -100.0f) pos.x = 100.0f;
+		float sq = params.squareSize / 2;
 
-		if (pos.y > 100.0f) pos.y = -100.0f;
-		if (pos.y < -100.0f) pos.y = 100.0f;
+		if (pos.x > sq) pos.x = -sq;
+		if (pos.x < -sq) pos.x = sq;
+
+		if (pos.y > sq) pos.y = -sq;
+		if (pos.y < -sq) pos.y = sq;
 
 
 		// store new position and velocity
@@ -270,6 +272,9 @@ float2 calculateAcceleration(
 {
 	int2 gridPos = calcGridPos(pos);
 
+	//if (gridPos.x != params.test.x || gridPos.y != params.test.y)
+	//	return make_float2(0, 0);
+
 	float2 sep_sum = make_float2(0, 0);
 	int sep_n = 0;
 
@@ -277,7 +282,18 @@ float2 calculateAcceleration(
 	{
 		for (int x = -1; x <= 1; x++)
 		{
-			uint gridHash = calcGridHash(gridPos + make_int2(x, y));
+			int2 neightbourGrid = gridPos + make_int2(x, y);
+
+			float2 offset = make_float2(0, 0);
+			if (neightbourGrid.x == -1) { neightbourGrid.x = params.gridSize.x - 1; offset.x -= params.squareSize; }
+			else if (neightbourGrid.x == params.gridSize.x) { neightbourGrid.x = 0; offset.x += params.squareSize; }
+			if (neightbourGrid.y == -1) { neightbourGrid.y = params.gridSize.y - 1; offset.y -= params.squareSize; }
+			else if (neightbourGrid.y == params.gridSize.y) { neightbourGrid.y = 0; offset.y += params.squareSize; }
+
+			//if (offset.x == 0 && offset.y == 0)
+			//	continue;
+
+			uint gridHash = calcGridHash(neightbourGrid);
 
 			// get start of bucket for this cell
 			uint startIndex = cellStart[gridHash];
@@ -291,22 +307,20 @@ float2 calculateAcceleration(
 				{
 					if (j != index)                // check not colliding with self
 					{
-						float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y);
+						float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y) + offset;
 						float2 toVec = pos2 - pos;
 						float dist = length(toVec);
 						if (dist > eps)
 						{
-							sep_sum += toVec;
+							//sep_sum += toVec;
 							sep_n++;
-							//sep_sum += toVec / dist;// / dist;
+							sep_sum += toVec / dist;// / dist;
 						}
 					}
 				}
 			}
 		}
 	}
-
-	return sep_sum;
 
 	float2 sep_acc = make_float2(0, 0);
 	{
@@ -322,7 +336,7 @@ float2 calculateAcceleration(
 		//sep_acc *= params.separationFactor;
 
 		if (length(sep_sum) > eps)
-			sep_acc /= length(sep_sum);
+			sep_acc = sep_sum / length(sep_sum);
 	}
 
 

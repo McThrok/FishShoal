@@ -42,6 +42,11 @@ struct SimParams
 
 	float maxSpeed;
 	float maxAcceleration;
+
+	float squareSize;
+
+
+	float2 test;
 };
 
 #endif

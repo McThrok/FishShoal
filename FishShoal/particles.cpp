@@ -56,9 +56,10 @@
 #define THRESHOLD         0.30f
 
 #define GRID_SIZE       64
-#define NUM_PARTICLES   1600;
+#define NUM_PARTICLES   64*64;
 
 const uint width = 1300, height = 900;
+float squareSize = 200;
 
 // view params
 int ox, oy;
@@ -110,6 +111,7 @@ extern "C" void copyArrayFromDevice(void* host, const void* device, unsigned int
 void initParticleSystem(int numParticles, uint2 gridSize)
 {
 	psystem = new ParticleSystem(numParticles, gridSize);
+	psystem->params.squareSize = squareSize;
 	psystem->reset();
 
 	renderer = new ParticleRenderer;
@@ -210,7 +212,7 @@ void display()
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -100);
+	glTranslatef(0, 0, -squareSize/2);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
 	// cube
@@ -219,7 +221,7 @@ void display()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -200);
+	glTranslatef(0, 0, -squareSize);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 	if (renderer)
 	{
