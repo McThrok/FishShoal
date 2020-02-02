@@ -77,7 +77,7 @@ class ParticleSystem
         void _initialize(int numParticles);
         void _finalize();
 
-        void initGrid(uint *size, uint numParticles);
+        void initGrid();
 
     protected: // data
         bool m_bInitialized;
@@ -104,7 +104,6 @@ class ParticleSystem
         uint  *m_dCellStart;        // index of start of each cell in sorted list
         uint  *m_dCellEnd;          // index of end of cell
 
-        uint   m_gridSortBits;
 
         uint   m_posVbo;            // vertex buffer object for particle positions
         uint   m_colorVBO;          // vertex buffer object for colors

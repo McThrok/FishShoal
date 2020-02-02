@@ -72,11 +72,9 @@ __device__ int2 calcGridPos(float2 p)
 	return gridPos;
 }
 
-// calculate address in grid from position (clamping to edges)
+// calculate address in grid from position
 __device__ uint calcGridHash(int2 gridPos)
 {
-	gridPos.x = gridPos.x & (params.gridSize.x - 1);  // wrap grid, assumes size is power of 2
-	gridPos.y = gridPos.y & (params.gridSize.y - 1);
 	return __umul24(gridPos.y, params.gridSize.x) + gridPos.x;
 }
 
@@ -272,8 +270,7 @@ float2 calculateAcceleration(
 {
 	int2 gridPos = calcGridPos(pos);
 
-	//if (gridPos.x != params.test.x || gridPos.y != params.test.y)
-	//	return make_float2(0, 0);
+
 
 	float2 sep_sum = make_float2(0, 0);
 	int sep_n = 0;
@@ -310,11 +307,10 @@ float2 calculateAcceleration(
 						float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y) + offset;
 						float2 toVec = pos2 - pos;
 						float dist = length(toVec);
-						if (dist > eps)
+						if (params.particleRadius <= dist)
 						{
-							//sep_sum += toVec;
 							sep_n++;
-							sep_sum += toVec / dist;// / dist;
+							sep_sum += toVec / dist / dist;
 						}
 					}
 				}
@@ -325,18 +321,15 @@ float2 calculateAcceleration(
 	float2 sep_acc = make_float2(0, 0);
 	{
 		if (sep_n)
-			sep_sum /= -sep_n;
+			sep_acc = -sep_sum / sep_n;
 
-		//if (length(sep_sum)>eps)
-		//{
-		//	sep_acc = (normalize(sep_acc) * params.maxSpeed) - vel;
-		//	if (length(sep_acc) > params.maxAcceleration)
-		//		sep_acc = normalize(sep_acc) * params.maxAcceleration;
-		//}
-		//sep_acc *= params.separationFactor;
-
-		if (length(sep_sum) > eps)
-			sep_acc = sep_sum / length(sep_sum);
+		if (length(sep_acc) > eps)
+		{
+			sep_acc = (normalize(sep_acc) * params.maxSpeed) - vel;
+			if (length(sep_acc) > params.maxAcceleration)
+				sep_acc = normalize(sep_acc) * params.maxAcceleration;
+		}
+		sep_acc *= params.separationFactor;
 	}
 
 

@@ -55,15 +55,14 @@
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
 
-#define GRID_SIZE       64
-#define NUM_PARTICLES   64*64;
+#define GRID_SIZE       64*8
+#define NUM_PARTICLES   16*16;
 
 const uint width = 1300, height = 900;
 float squareSize = 200;
 
 // view params
 int ox, oy;
-ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
 
 uint numParticles = 0;
 uint2 gridSize;
@@ -111,7 +110,7 @@ extern "C" void copyArrayFromDevice(void* host, const void* device, unsigned int
 void initParticleSystem(int numParticles, uint2 gridSize)
 {
 	psystem = new ParticleSystem(numParticles, gridSize);
-	psystem->params.squareSize = squareSize;
+	squareSize = psystem->params.squareSize;
 	psystem->reset();
 
 	renderer = new ParticleRenderer;
@@ -225,7 +224,7 @@ void display()
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 	if (renderer)
 	{
-		renderer->display(displayMode);
+		renderer->display();
 	}
 
 	//sliders
@@ -242,11 +241,6 @@ void display()
 	glutReportErrors();
 
 	computeFPS();
-}
-
-inline float frand()
-{
-	return rand() / (float)RAND_MAX;
 }
 
 void reshape(int w, int h)

@@ -43,24 +43,22 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	m_gridSize(gridSize),
 	m_timer(NULL)
 {
-	m_numGridCells = m_gridSize.x * m_gridSize.y;
-
-	m_gridSortBits = 18;    // increase this for larger grids
 
 	// set simulation parameters
 	params.gridSize = m_gridSize;
-	params.numCells = m_numGridCells;
 	params.numBodies = m_numParticles;
+	params.numCells = m_numGridCells = m_gridSize.x * m_gridSize.y;
 
-	params.particleRadius = 1.0f / 64;
+	//params.test = make_float2(0, 6400);
+	params.squareSize = 200;
+	params.particleRadius = params.squareSize / m_gridSize.x;
 
 	//use for mouse
 	params.mousePos = make_float2(-1.2f, -0.8f);
 	params.mouseRadius = 0.2f;
 
-	params.test = make_float2(50, 50);
 	//params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
-	params.worldOrigin = make_float2(-params.squareSize/2, -params.squareSize / 2);
+	params.worldOrigin = make_float2(-params.squareSize / 2, -params.squareSize / 2);
 	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
 	params.cellSize = make_float2(cellSize, cellSize);
 
@@ -170,15 +168,10 @@ ParticleSystem::_initialize(int numParticles)
 	for (uint i = 0; i < m_numParticles; i++)
 	{
 		float t = i / (float)m_numParticles;
-#if 0
-		* ptr++ = rand() / (float)RAND_MAX;
-		*ptr++ = rand() / (float)RAND_MAX;
-		*ptr++ = rand() / (float)RAND_MAX;
-#else
 		colorRamp(t, ptr);
+
 		ptr += 3;
-#endif
-		* ptr++ = 1.0f;
+		*ptr++ = 1.0f;
 	}
 
 	glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -333,17 +326,15 @@ inline float frand()
 }
 
 void
-ParticleSystem::initGrid(uint* size, uint numParticles)
+ParticleSystem::initGrid()
 {
 	srand(1973);
 	int p = 0, v = 0;
 
 	for (uint i = 0; i < m_numParticles; i++)
 	{
-		float px = frand();
-		float py = frand();
-		m_hPos[p++] = 200 * (px - 0.5f);
-		m_hPos[p++] = 200 * (py - 0.5f);
+		m_hPos[p++] = 200 * (frand() - 0.5f);
+		m_hPos[p++] = 200 * (frand() - 0.5f);
 		m_hPos[p++] = 0;
 		m_hPos[p++] = 1.0f; // radius
 
@@ -357,11 +348,7 @@ ParticleSystem::initGrid(uint* size, uint numParticles)
 void
 ParticleSystem::reset()
 {
-	uint s = (int)ceilf(sqrtf(m_numParticles));
-	uint gridSize[3];
-	gridSize[0] = gridSize[1] = s;
-	gridSize[2] = 1;
-	initGrid(gridSize, m_numParticles);
+	initGrid();
 
 	setArray(POSITION, m_hPos, 0, m_numParticles);
 	setArray(VELOCITY, m_hVel, 0, m_numParticles);

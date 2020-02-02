@@ -24,15 +24,7 @@ class ParticleRenderer
         {
             m_colorVBO = vbo;
         }
-
-        enum DisplayMode
-        {
-            PARTICLE_POINTS,
-            PARTICLE_SPHERES,
-            PARTICLE_NUM_MODES
-        };
-
-        void display(DisplayMode mode = PARTICLE_POINTS);
+        void display();
         void displayGrid();
 
         void setPointSize(float size)
