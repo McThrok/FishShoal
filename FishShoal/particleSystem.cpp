@@ -33,7 +33,7 @@
 #define CUDART_PI_F         3.141592654f
 #endif
 
-ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
+ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	m_bInitialized(false),
 	m_numParticles(numParticles),
 	m_hPos(0),
@@ -43,7 +43,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
 	m_gridSize(gridSize),
 	m_timer(NULL)
 {
-	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
+	m_numGridCells = m_gridSize.x * m_gridSize.y;
 
 	m_gridSortBits = 18;    // increase this for larger grids
 
@@ -52,15 +52,16 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
 	params.numCells = m_numGridCells;
 	params.numBodies = m_numParticles;
 
-	params.particleRadius = 1.0f / 64.0f;
+	params.particleRadius = 1.0f/64;
 
 	//use for mouse
 	params.mousePos = make_float2(-1.2f, -0.8f);
 	params.mouseRadius = 0.2f;
 
-	params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
+	//params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
+	params.worldOrigin = make_float2(-100, -100);
 	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
-	params.cellSize = make_float3(cellSize, cellSize, cellSize);
+	params.cellSize = make_float2(cellSize, cellSize);
 
 	params.separationFactor = 1.f;
 	params.separationRadius = 1.f;
@@ -340,8 +341,8 @@ ParticleSystem::initGrid(uint* size, uint numParticles)
 	{
 		float px = frand();
 		float py = frand();
-		m_hPos[p++] = 2 * (px - 0.5f);
-		m_hPos[p++] = 2 * (py - 0.5f);
+		m_hPos[p++] = 200 * (px - 0.5f);
+		m_hPos[p++] = 200 * (py - 0.5f);
 		m_hPos[p++] = 0;
 		m_hPos[p++] = 1.0f; // radius
 

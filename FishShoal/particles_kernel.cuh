@@ -20,10 +20,10 @@ struct SimParams
 {
 	float particleRadius;
 
-	uint3 gridSize;
+	uint2 gridSize;
 	uint numCells;
-	float3 worldOrigin;
-	float3 cellSize;
+	float2 worldOrigin;
+	float2 cellSize;
 
 	uint numBodies;
 	uint maxParticlesPerCell;
@@ -39,6 +39,9 @@ struct SimParams
 	float mouseFactor;
 	float mouseRadius;
 	float2 mousePos;
+
+	float maxSpeed;
+	float maxAcceleration;
 };
 
 #endif

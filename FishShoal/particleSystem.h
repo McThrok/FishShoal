@@ -23,7 +23,7 @@
 class ParticleSystem
 {
     public:
-        ParticleSystem(uint numParticles, uint3 gridSize);
+        ParticleSystem(uint numParticles, uint2 gridSize);
         ~ParticleSystem();
 
         enum ParticleConfig
@@ -116,7 +116,7 @@ class ParticleSystem
         struct cudaGraphicsResource *m_cuda_colorvbo_resource; // handles OpenGL-CUDA exchange
 
         // params
-        uint3 m_gridSize;
+        uint2 m_gridSize;
         uint m_numGridCells;
 
         StopWatchInterface *m_timer;

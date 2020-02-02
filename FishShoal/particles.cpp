@@ -65,7 +65,7 @@ int ox, oy;
 ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
 
 uint numParticles = 0;
-uint3 gridSize;
+uint2 gridSize;
 
 // simulation parameters
 float timestep = 0.5f;
@@ -80,6 +80,9 @@ float visionAngle = 180.f;
 
 float mouseFactor = 10.f;
 float mouseRadius = 1.f;
+
+float maxSpeed = 1.f;
+float maxAcceleration = 1.f;
 
 ParticleSystem* psystem = 0;
 
@@ -104,7 +107,7 @@ extern "C" void cudaGLInit(int argc, char** argv);
 extern "C" void copyArrayFromDevice(void* host, const void* device, unsigned int vbo, int size);
 
 // initialize particle system
-void initParticleSystem(int numParticles, uint3 gridSize)
+void initParticleSystem(int numParticles, uint2 gridSize)
 {
 	psystem = new ParticleSystem(numParticles, gridSize);
 	psystem->reset();
@@ -191,6 +194,8 @@ void display()
 	psystem->params.visionAngle = visionAngle;
 	psystem->params.mouseFactor = mouseFactor;
 	psystem->params.mouseRadius = mouseRadius;
+	psystem->params.maxSpeed = maxSpeed;
+	psystem->params.maxAcceleration = maxAcceleration;
 
 	psystem->update(timestep);
 
@@ -205,14 +210,17 @@ void display()
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -3);
-
+	glTranslatef(0, 0, -100);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
 	// cube
 	glColor3f(1.0, 1.0, 1.0);
-	glutWireCube(2.0);
+	glutWireCube(200.0);
 
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0, 0, -200);
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 	if (renderer)
 	{
 		renderer->display(displayMode);
@@ -244,7 +252,7 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	gluPerspective(60.0, (float)w / (float)h, 0.1, 100.0);
+	gluPerspective(60.0, (float)w / (float)h, 0.1, 1000.0);
 	//gluOrtho2D(-1, 0, -1, 0);
 	//gluOrtho2D(-1000, w, -1000, h);
 
@@ -347,6 +355,9 @@ void initParams()
 	params->AddParam(new Param<float>("mouse factor", separationFactor, 0.0f, 1.0f, 0.001f, &mouseFactor));
 
 	params->AddParam(new Param<float>("vision angle", visionAngle, 0.0f, 180.0f, 1.f, &visionAngle));
+
+	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 1.0f, 0.001f, &maxSpeed));
+	params->AddParam(new Param<float>("max acceleration", maxAcceleration, 0.0f, 1.0f, 0.001f, &maxAcceleration));
 }
 
 int main(int argc, char** argv)
@@ -360,7 +371,7 @@ int main(int argc, char** argv)
 	numParticles = NUM_PARTICLES;
 	uint gridDim = GRID_SIZE;
 
-	gridSize.x = gridSize.y = gridSize.z = gridDim;
+	gridSize.x = gridSize.y = gridDim;
 	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y );
 	printf("particles: %d\n", numParticles);
 
