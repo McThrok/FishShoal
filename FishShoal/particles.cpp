@@ -19,7 +19,15 @@
 	 - replaced sort function with latest radix sort, now disables v-sync.
 	 - added support for automated testing and comparison to a reference value.
  */
-
+//compute_30, sm_30
+//compute_35, sm_35
+//compute_37, sm_37
+//compute_50, sm_50
+//compute_52, sm_52
+//compute_60, sm_60
+//compute_61, sm_61
+//compute_70, sm_70
+//compute_75, sm_75
  // OpenGL Graphics includes
 #include <helper_gl.h>
 #if defined (WIN32)
@@ -56,7 +64,7 @@
 #define THRESHOLD         0.30f
 
 #define GRID_SIZE 32
-#define NUM_PARTICLES   16*16;
+#define NUM_PARTICLES   32*32;
 
 const uint width = 1300, height = 900;
 float squareSize = 200;
@@ -70,19 +78,19 @@ uint2 gridSize;
 // simulation parameters
 float timestep = 0.5f;
 
-float separationFactor = 1.f;
-float separationRadius = 1.f;
-float alignmentFactor = 1.f;
-float alignmentRadius = 1.f;
-float cohesionFactor = 1.f;
+float separationRadius = 0.4f;
+float alignmentRadius = 0.7f;
 float cohesionRadius = 1.f;
+float separationFactor = 0 * 1.f;
+float alignmentFactor = 0*0.7f;
+float cohesionFactor =  1.0f;
 float visionAngle = 180.f;
 
 float mouseFactor = 10.f;
 float mouseRadius = 1.f;
 
-float maxSpeed = 1.f;
-float maxAcceleration = 1.f;
+float maxSpeed = 2.f;
+float maxAcceleration = 0.2f;
 
 ParticleSystem* psystem = 0;
 
@@ -187,10 +195,10 @@ void display()
 
 	// update the simulation
 	psystem->params.separationFactor = separationFactor;
-	psystem->params.separationRadius = separationRadius;
 	psystem->params.alignmentFactor = alignmentFactor;
-	psystem->params.alignmentRadius = alignmentRadius;
 	psystem->params.cohesionFactor = cohesionFactor;
+	psystem->params.separationRadius = separationRadius;
+	psystem->params.alignmentRadius = alignmentRadius;
 	psystem->params.cohesionRadius = cohesionRadius;
 	psystem->params.visionAngle = visionAngle;
 	psystem->params.mouseFactor = mouseFactor;
@@ -248,9 +256,7 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	gluPerspective(60.0, (float)w / (float)h, 0.1, 1000.0);
-	//gluOrtho2D(-1, 0, -1, 0);
-	//gluOrtho2D(-1000, w, -1000, h);
+	glOrtho(-squareSize / 2, squareSize / 2, -squareSize / 2, squareSize / 2, -1000, 1000);
 
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, w, h);
@@ -341,18 +347,18 @@ void initParams()
 	params->AddParam(new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f, &timestep));
 
 	params->AddParam(new Param<float>("separation factor", separationFactor, 0.0f, 1.0f, 0.001f, &separationFactor));
-	params->AddParam(new Param<float>("alignment factor", separationFactor, 0.0f, 1.0f, 0.001f, &alignmentFactor));
-	params->AddParam(new Param<float>("cohesion factor", separationFactor, 0.0f, 1.0f, 0.001f, &cohesionFactor));
-	params->AddParam(new Param<float>("separation radius", separationFactor, 0.0f, 1.0f, 0.001f, &separationRadius));
-	params->AddParam(new Param<float>("alignment radius", separationFactor, 0.0f, 1.0f, 0.001f, &alignmentRadius));
-	params->AddParam(new Param<float>("cohesion radius", separationFactor, 0.0f, 1.0f, 0.001f, &cohesionRadius));
+	params->AddParam(new Param<float>("alignment factor", alignmentFactor, 0.0f, 1.0f, 0.001f, &alignmentFactor));
+	params->AddParam(new Param<float>("cohesion factor", cohesionFactor, 0.0f, 1.0f, 0.001f, &cohesionFactor));
+	params->AddParam(new Param<float>("separation radius", separationRadius, 0.0f, 1.0f, 0.001f, &separationRadius));
+	params->AddParam(new Param<float>("alignment radius", alignmentRadius, 0.0f, 1.0f, 0.001f, &alignmentRadius));
+	params->AddParam(new Param<float>("cohesion radius", cohesionRadius, 0.0f, 1.0f, 0.001f, &cohesionRadius));
 
-	params->AddParam(new Param<float>("mouse radius", separationFactor, 0.0f, 1.0f, 0.001f, &mouseRadius));
-	params->AddParam(new Param<float>("mouse factor", separationFactor, 0.0f, 1.0f, 0.001f, &mouseFactor));
+	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 1.0f, 0.001f, &mouseRadius));
+	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 10.0f, 0.001f, &mouseFactor));
 
 	params->AddParam(new Param<float>("vision angle", visionAngle, 0.0f, 180.0f, 1.f, &visionAngle));
 
-	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 1.0f, 0.001f, &maxSpeed));
+	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 3.0f, 0.001f, &maxSpeed));
 	params->AddParam(new Param<float>("max acceleration", maxAcceleration, 0.0f, 1.0f, 0.001f, &maxAcceleration));
 }
 

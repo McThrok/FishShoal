@@ -21,7 +21,7 @@ struct SimParams
 	float particleRadius;
 
 	uint2 gridSize;
-	uint numCells;
+	//uint numCells;
 	float2 worldOrigin;
 	float2 cellSize;
 

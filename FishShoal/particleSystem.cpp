@@ -43,14 +43,13 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	m_gridSize(gridSize),
 	m_timer(NULL)
 {
+	params.squareSize = 200;
+	m_numGridCells = m_gridSize.x * m_gridSize.y;
 
 	// set simulation parameters
 	params.gridSize = m_gridSize;
 	params.numBodies = m_numParticles;
-	params.numCells = m_numGridCells = m_gridSize.x * m_gridSize.y;
 
-	//params.test = make_float2(0, 6400);
-	params.squareSize = 200;
 	params.particleRadius = params.squareSize / m_gridSize.x;
 
 	//use for mouse
@@ -60,16 +59,6 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	params.worldOrigin = make_float2(-params.squareSize / 2, -params.squareSize / 2);
 	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
 	params.cellSize = make_float2(cellSize, cellSize);
-
-	params.separationFactor = 1.f;
-	params.separationRadius = 1.f;
-	params.alignmentFactor = 1.f;
-	params.alignmentRadius = 1.f;
-	params.cohesionFactor = 1.f;
-	params.cohesionRadius = 1.f;
-	params.visionAngle = 180.f;
-	params.mouseFactor = 10.f;
-	params.mouseRadius = 1.f;
 
 	_initialize(numParticles);
 }
@@ -325,20 +314,20 @@ inline float frand()
 }
 
 void
-ParticleSystem::initGrid()
+ParticleSystem::initParticles()
 {
 	srand(1973);
 	int p = 0, v = 0;
 
 	for (uint i = 0; i < m_numParticles; i++)
 	{
-		m_hPos[p++] = 200 * (frand() - 0.5f);
-		m_hPos[p++] = 200 * (frand() - 0.5f);
+		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
+		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
 		m_hPos[p++] = 0;
 		m_hPos[p++] = 1.0f; // radius
 
-		m_hVel[v++] = 0.0f;
-		m_hVel[v++] = 0.0f;
+		m_hVel[v++] = frand() - 0.5f;
+		m_hVel[v++] = frand() - 0.5f;
 		m_hVel[v++] = 0.0f;
 		m_hVel[v++] = 0.0f;
 	}
@@ -347,7 +336,7 @@ ParticleSystem::initGrid()
 void
 ParticleSystem::reset()
 {
-	initGrid();
+	initParticles();
 
 	setArray(POSITION, m_hPos, 0, m_numParticles);
 	setArray(VELOCITY, m_hVel, 0, m_numParticles);

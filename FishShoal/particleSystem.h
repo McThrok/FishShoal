@@ -77,7 +77,7 @@ class ParticleSystem
         void _initialize(int numParticles);
         void _finalize();
 
-        void initGrid();
+        void initParticles();
 
     protected: // data
         bool m_bInitialized;
