@@ -19,16 +19,16 @@
 	 - replaced sort function with latest radix sort, now disables v-sync.
 	 - added support for automated testing and comparison to a reference value.
  */
-//compute_30, sm_30
-//compute_35, sm_35
-//compute_37, sm_37
-//compute_50, sm_50
-//compute_52, sm_52
-//compute_60, sm_60
-//compute_61, sm_61
-//compute_70, sm_70
-//compute_75, sm_75
- // OpenGL Graphics includes
+ //compute_30, sm_30
+ //compute_35, sm_35
+ //compute_37, sm_37
+ //compute_50, sm_50
+ //compute_52, sm_52
+ //compute_60, sm_60
+ //compute_61, sm_61
+ //compute_70, sm_70
+ //compute_75, sm_75
+  // OpenGL Graphics includes
 #include <helper_gl.h>
 #if defined (WIN32)
 #include <GL/wglew.h>
@@ -63,8 +63,8 @@
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
 
-#define GRID_SIZE 32
-#define NUM_PARTICLES   32*32;
+#define GRID_SIZE 16
+#define NUM_PARTICLES   16*16;
 
 const uint width = 1300, height = 900;
 float squareSize = 200;
@@ -78,18 +78,17 @@ uint2 gridSize;
 // simulation parameters
 float timestep = 0.5f;
 
-float separationRadius = 0.4f;
-float alignmentRadius = 0.7f;
+float separationFactor = 1.f;
+float alignmentFactor = 0.75f;
+float cohesionFactor = 0.5f;
+float separationRadius = 0.5f;
+float alignmentRadius = 0.75f;
 float cohesionRadius = 1.f;
-float separationFactor = 0 * 1.f;
-float alignmentFactor = 0*0.7f;
-float cohesionFactor =  1.0f;
 float visionAngle = 180.f;
-
 float mouseFactor = 10.f;
 float mouseRadius = 1.f;
 
-float maxSpeed = 2.f;
+float maxSpeed = 0.8f;
 float maxAcceleration = 0.2f;
 
 ParticleSystem* psystem = 0;
@@ -356,7 +355,7 @@ void initParams()
 	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 1.0f, 0.001f, &mouseRadius));
 	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 10.0f, 0.001f, &mouseFactor));
 
-	params->AddParam(new Param<float>("vision angle", visionAngle, 0.0f, 180.0f, 1.f, &visionAngle));
+	params->AddParam(new Param<float>("vision angle", visionAngle, 90.0f, 180.0f, 1.f, &visionAngle));
 
 	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 3.0f, 0.001f, &maxSpeed));
 	params->AddParam(new Param<float>("max acceleration", maxAcceleration, 0.0f, 1.0f, 0.001f, &maxAcceleration));

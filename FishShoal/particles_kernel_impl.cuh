@@ -27,7 +27,7 @@ namespace cg = cooperative_groups;
 
 // simulation parameters in constant memory
 __constant__ SimParams params;
-__constant__ float eps = 1e-5;
+__constant__ float eps = 1e-7;
 
 
 struct integrate_functor
@@ -245,22 +245,22 @@ float2 calculateAcceleration(
 
 					if (r < dist) continue;
 
-					//float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
-					//float cosToVec = angleBetween(toVec, vel);
+					float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
+					float cosToVec = angleBetween(toVec, vel);
 
-					//if (cosVision > cosToVec) continue;
+					if (cosVision > cosToVec) continue;
 
-					//if (r * params.separationRadius >= dist)
-					//{
-					//	sep_n++;
-					//	sep_sum -= toVec / dist / dist;
-					//}
+					if (r * params.separationRadius >= dist)
+					{
+						sep_n++;
+						sep_sum -= toVec / dist / dist;
+					}
 
-					//if (r * params.alignmentRadius >= dist)
-					//{
-					//	alg_n++;
-					//	alg_sum += make_float2(oldVel[j].x, oldVel[j].y);
-					//}
+					if (r * params.alignmentRadius >= dist)
+					{
+						alg_n++;
+						alg_sum += make_float2(oldVel[j].x, oldVel[j].y);
+					}
 
 					if (r * params.cohesionRadius >= dist)
 					{
@@ -274,20 +274,20 @@ float2 calculateAcceleration(
 	}
 
 	float2 sep_acc = make_float2(0, 0);
-	//if (sep_n)
-	//{
-	//	sep_acc = sep_sum / sep_n;
-	//	sep_acc = setLength(sep_acc, params.maxSpeed) - vel;
-	//	sep_acc = setLength(sep_acc, params.maxAcceleration) * params.separationFactor;
-	//}
+	if (sep_n)
+	{
+		sep_acc = sep_sum / sep_n;
+		sep_acc = setLength(sep_acc, params.maxSpeed) - vel;
+		sep_acc = setLength(sep_acc, params.maxAcceleration) * params.separationFactor;
+	}
 
 	float2 alg_acc = make_float2(0, 0);
-	//if (alg_n)
-	//{
-	//	alg_acc = alg_sum / alg_n;
-	//	alg_acc = setLength(alg_acc, params.maxSpeed) - vel;
-	//	alg_acc = setLength(alg_acc, params.maxAcceleration) * params.alignmentFactor;
-	//}
+	if (alg_n)
+	{
+		alg_acc = alg_sum / alg_n;
+		alg_acc = setLength(alg_acc, params.maxSpeed) - vel;
+		alg_acc = setLength(alg_acc, params.maxAcceleration) * params.alignmentFactor;
+	}
 
 
 	float2 coh_acc = make_float2(0, 0);
@@ -295,7 +295,7 @@ float2 calculateAcceleration(
 	{
 		coh_acc = coh_sum / coh_n - pos;
 		coh_acc = setLength(coh_acc, params.maxSpeed) -vel;
-		coh_acc = setLength(coh_acc, params.maxAcceleration) * params.cohesionRadius;
+		coh_acc = setLength(coh_acc, params.maxAcceleration) * params.cohesionFactor;
 	}
 
 	return sep_acc + alg_acc + coh_acc;
