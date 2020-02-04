@@ -60,13 +60,10 @@
 #include "render_particles.h"
 #include "paramgl.h"
 
-#define MAX_EPSILON_ERROR 5.00f
-#define THRESHOLD         0.30f
+#define GRID_SIZE 32
+#define NUM_PARTICLES   64*64;
 
-#define GRID_SIZE 16
-#define NUM_PARTICLES   16*16;
-
-const uint width = 1300, height = 900;
+const uint width = 900, height = 900;
 float squareSize = 200;
 
 // view params

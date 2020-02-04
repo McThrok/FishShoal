@@ -169,8 +169,6 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 		sortedPos[index] = pos;
 		sortedVel[index] = vel;
 	}
-
-
 }
 
 __device__ float2 limit(float2 v, float l)
@@ -226,13 +224,11 @@ float2 calculateAcceleration(
 
 			// get start of bucket for this cell
 			uint startIndex = cellStart[gridHash];
-			//uint startIndex = 0;
 
 			if (startIndex != 0xffffffff)          // cell is not empty
 			{
 				// iterate over particles in this cell
 				uint endIndex = cellEnd[gridHash];
-				//uint endIndex = params.numBodies;
 
 				for (uint j = startIndex; j < endIndex; j++)
 				{
@@ -267,7 +263,6 @@ float2 calculateAcceleration(
 						coh_n++;
 						coh_sum += pos2;
 					}
-
 				}
 			}
 		}
