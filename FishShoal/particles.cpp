@@ -60,8 +60,8 @@
 #include "render_particles.h"
 #include "paramgl.h"
 
-#define GRID_SIZE 32
-#define NUM_PARTICLES   64*64;
+#define GRID_SIZE 16
+#define NUM_PARTICLES   128*128;
 
 const uint width = 900, height = 900;
 float squareSize = 200;
@@ -78,7 +78,7 @@ float timestep = 0.5f;
 float separationFactor = 1.f;
 float alignmentFactor = 0.75f;
 float cohesionFactor = 0.5f;
-float separationRadius = 0.5f;
+float separationRadius = 0.15f;
 float alignmentRadius = 0.75f;
 float cohesionRadius = 1.f;
 float visionAngle = 180.f;
@@ -369,7 +369,7 @@ void initParams()
 	params->AddParam(new Param<float>("cohesion radius", cohesionRadius, 0.0f, 1.0f, 0.001f, &cohesionRadius));
 
 	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 10.0f, 0.001f, &mouseRadius));
-	params->AddParam(new Param<float>("mouse factor", mouseFactor, 10.0f, 50.0f, 0.001f, &mouseFactor));
+	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 50.0f, 0.001f, &mouseFactor));
 
 	params->AddParam(new Param<float>("vision angle", visionAngle, 90.0f, 180.0f, 1.f, &visionAngle));
 
