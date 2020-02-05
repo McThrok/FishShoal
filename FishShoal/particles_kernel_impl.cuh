@@ -293,7 +293,19 @@ float2 calculateAcceleration(
 		coh_acc = setLength(coh_acc, params.maxAcceleration) * params.cohesionFactor;
 	}
 
-	return sep_acc + alg_acc + coh_acc;
+	float2 repl_acc = make_float2(0, 0);
+	float2 toMouse = params.mousePos - pos;
+
+	float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
+	float cosToVec = angleBetween(toMouse, vel);
+
+	if (cosVision <= cosToVec && length(toMouse) < params.mouseRadius)
+	{
+		repl_acc = setLength(-toMouse, params.maxSpeed) - vel;
+		repl_acc = setLength(repl_acc, params.maxAcceleration) * params.mouseFactor;
+	}
+
+	return sep_acc + alg_acc + coh_acc + repl_acc;
 }
 
 __global__

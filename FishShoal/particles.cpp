@@ -61,7 +61,7 @@
 #include "paramgl.h"
 
 #define GRID_SIZE 32
-#define NUM_PARTICLES   32*32;
+#define NUM_PARTICLES   64*64;
 
 const uint width = 900, height = 900;
 float squareSize = 200;
@@ -82,8 +82,8 @@ float separationRadius = 0.5f;
 float alignmentRadius = 0.75f;
 float cohesionRadius = 1.f;
 float visionAngle = 180.f;
-float mouseFactor = 10.f;
-float mouseRadius = 10.f;
+float mouseFactor = 20.f;
+float mouseRadius = 5.f;
 
 float maxSpeed = 0.8f;
 float maxAcceleration = 0.2f;
@@ -369,7 +369,7 @@ void initParams()
 	params->AddParam(new Param<float>("cohesion radius", cohesionRadius, 0.0f, 1.0f, 0.001f, &cohesionRadius));
 
 	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 10.0f, 0.001f, &mouseRadius));
-	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 10.0f, 0.001f, &mouseFactor));
+	params->AddParam(new Param<float>("mouse factor", mouseFactor, 10.0f, 50.0f, 0.001f, &mouseFactor));
 
 	params->AddParam(new Param<float>("vision angle", visionAngle, 90.0f, 180.0f, 1.f, &visionAngle));
 
