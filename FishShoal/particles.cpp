@@ -83,7 +83,7 @@ float alignmentRadius = 0.75f;
 float cohesionRadius = 1.f;
 float visionAngle = 180.f;
 float mouseFactor = 10.f;
-float mouseRadius = 1.f;
+float mouseRadius = 10.f;
 
 float maxSpeed = 0.8f;
 float maxAcceleration = 0.2f;
@@ -215,31 +215,31 @@ void display()
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -squareSize / 2);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
-	// cube
+	// mouse
+	float2 mousePos = psystem->params.mousePos;
+	glTranslatef(mousePos.x, mousePos.y, 0);
 	glColor3f(1.0, 1.0, 1.0);
-	glutWireCube(200.0);
+	glColor3f(1.0, 0, 0);
+	glutWireCylinder(psystem->params.mouseRadius, 0, 100, 0);
 
-	//radius
-	glMatrixMode(GL_MODELVIEW);
+	// radius
 	float2 pos = psystem->getFirstPosition();
 	glLoadIdentity();
-	glTranslatef(pos.x,pos.y,0);
+	glTranslatef(pos.x, pos.y, 0);
 
 	float r = psystem->params.particleRadius;
 	glColor3f(1.0, 0, 0);
-	glutWireCylinder(r*psystem->params.separationRadius, 0, 100, 0);
+	glutWireCylinder(r * psystem->params.separationRadius, 0, 100, 0);
 	glColor3f(0, 1.0, 0);
-	glutWireCylinder(r*psystem->params.alignmentRadius, 0, 100, 0);
+	glutWireCylinder(r * psystem->params.alignmentRadius, 0, 100, 0);
 	glColor3f(0, 0, 1.0);
-	glutWireCylinder(r*psystem->params.cohesionRadius, 0, 100, 0);
+	glutWireCylinder(r * psystem->params.cohesionRadius, 0, 100, 0);
 
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -squareSize);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 	if (renderer)
 	{
@@ -275,7 +275,6 @@ void reshape(int w, int h)
 	if (renderer)
 	{
 		renderer->setWindowSize(w, h);
-		renderer->setFOV(60.0);
 	}
 }
 
@@ -294,31 +293,31 @@ void mouse(int button, int state, int x, int y)
 	glutPostRedisplay();
 }
 
-// transform vector by matrix
-void xform(float* v, float* r, GLfloat* m)
-{
-	r[0] = v[0] * m[0] + v[1] * m[4] + v[2] * m[8] + m[12];
-	r[1] = v[0] * m[1] + v[1] * m[5] + v[2] * m[9] + m[13];
-	r[2] = v[0] * m[2] + v[1] * m[6] + v[2] * m[10] + m[14];
-}
-
-// transform vector by transpose of matrix
-void ixform(float* v, float* r, GLfloat* m)
-{
-	r[0] = v[0] * m[0] + v[1] * m[1] + v[2] * m[2];
-	r[1] = v[0] * m[4] + v[1] * m[5] + v[2] * m[6];
-	r[2] = v[0] * m[8] + v[1] * m[9] + v[2] * m[10];
-}
-
-void ixformPoint(float* v, float* r, GLfloat* m)
-{
-	float x[4];
-	x[0] = v[0] - m[12];
-	x[1] = v[1] - m[13];
-	x[2] = v[2] - m[14];
-	x[3] = 1.0f;
-	ixform(x, r, m);
-}
+//// transform vector by matrix
+//void xform(float* v, float* r, GLfloat* m)
+//{
+//	r[0] = v[0] * m[0] + v[1] * m[4] + v[2] * m[8] + m[12];
+//	r[1] = v[0] * m[1] + v[1] * m[5] + v[2] * m[9] + m[13];
+//	r[2] = v[0] * m[2] + v[1] * m[6] + v[2] * m[10] + m[14];
+//}
+//
+//// transform vector by transpose of matrix
+//void ixform(float* v, float* r, GLfloat* m)
+//{
+//	r[0] = v[0] * m[0] + v[1] * m[1] + v[2] * m[2];
+//	r[1] = v[0] * m[4] + v[1] * m[5] + v[2] * m[6];
+//	r[2] = v[0] * m[8] + v[1] * m[9] + v[2] * m[10];
+//}
+//
+//void ixformPoint(float* v, float* r, GLfloat* m)
+//{
+//	float x[4];
+//	x[0] = v[0] - m[12];
+//	x[1] = v[1] - m[13];
+//	x[2] = v[2] - m[14];
+//	x[3] = 1.0f;
+//	ixform(x, r, m);
+//}
 
 void motion(int x, int y)
 {
@@ -333,6 +332,11 @@ void motion(int x, int y)
 		oy = y;
 		glutPostRedisplay();
 		return;
+	}
+	else
+	{
+		float sqs = psystem->params.squareSize;
+		psystem->params.mousePos = make_float2(1.0 * sqs * x / width - sqs / 2, sqs / 2 - 1.0 * sqs * y / height);
 	}
 
 	ox = x;
@@ -364,7 +368,7 @@ void initParams()
 	params->AddParam(new Param<float>("alignment radius", alignmentRadius, 0.0f, 1.0f, 0.001f, &alignmentRadius));
 	params->AddParam(new Param<float>("cohesion radius", cohesionRadius, 0.0f, 1.0f, 0.001f, &cohesionRadius));
 
-	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 1.0f, 0.001f, &mouseRadius));
+	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 10.0f, 0.001f, &mouseRadius));
 	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 10.0f, 0.001f, &mouseFactor));
 
 	params->AddParam(new Param<float>("vision angle", visionAngle, 90.0f, 180.0f, 1.f, &visionAngle));

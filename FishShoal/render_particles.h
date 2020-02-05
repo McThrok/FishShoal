@@ -35,10 +35,6 @@ class ParticleRenderer
         {
             m_particleRadius = r;
         }
-        void setFOV(float fov)
-        {
-            m_fov = fov;
-        }
         void setWindowSize(int w, int h)
         {
             m_window_w = w;
@@ -56,7 +52,6 @@ class ParticleRenderer
 
         float m_pointSize;
         float m_particleRadius;
-        float m_fov;
         int m_window_w, m_window_h;
 
         GLuint m_program;
