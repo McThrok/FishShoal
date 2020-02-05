@@ -139,12 +139,12 @@ extern "C"
                          float deltaTime,
                          uint numParticles)
     {
-        thrust::device_ptr<float4> d_pos4((float4 *)pos);
-        thrust::device_ptr<float4> d_vel4((float4 *)vel);
+        thrust::device_ptr<float2> d_pos2((float2 *)pos);
+        thrust::device_ptr<float2> d_vel2((float2 *)vel);
 
         thrust::for_each(
-            thrust::make_zip_iterator(thrust::make_tuple(d_pos4, d_vel4)),
-            thrust::make_zip_iterator(thrust::make_tuple(d_pos4+numParticles, d_vel4+numParticles)),
+            thrust::make_zip_iterator(thrust::make_tuple(d_pos2, d_vel2)),
+            thrust::make_zip_iterator(thrust::make_tuple(d_pos2+numParticles, d_vel2+numParticles)),
             integrate_functor(deltaTime));
     }
 
@@ -159,7 +159,7 @@ extern "C"
         // execute the kernel
         calcHashD<<< numBlocks, numThreads >>>(gridParticleHash,
                                                gridParticleIndex,
-                                               (float4 *) pos,
+                                               (float2 *) pos,
                                                numParticles);
 
         // check if kernel invocation generated an error
@@ -187,12 +187,12 @@ extern "C"
         reorderDataAndFindCellStartD<<< numBlocks, numThreads, smemSize>>>(
             cellStart,
             cellEnd,
-            (float4 *) sortedPos,
-            (float4 *) sortedVel,
+            (float2 *) sortedPos,
+            (float2 *) sortedVel,
             gridParticleHash,
             gridParticleIndex,
-            (float4 *) oldPos,
-            (float4 *) oldVel,
+            (float2 *) oldPos,
+            (float2 *) oldVel,
             numParticles);
         getLastCudaError("Kernel execution failed: reorderDataAndFindCellStartD");
 
@@ -213,9 +213,9 @@ extern "C"
         computeGridSize(numParticles, 64, numBlocks, numThreads);
 
         // execute the kernel
-        collideD<<< numBlocks, numThreads >>>((float4 *)newVel,
-                                              (float4 *)sortedPos,
-                                              (float4 *)sortedVel,
+        collideD<<< numBlocks, numThreads >>>((float2 *)newVel,
+                                              (float2 *)sortedPos,
+                                              (float2 *)sortedVel,
                                               gridParticleIndex,
                                               cellStart,
                                               cellEnd,

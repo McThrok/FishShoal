@@ -236,6 +236,7 @@ void display()
 	glColor3f(0, 0, 1.0);
 	glutWireCylinder(r*psystem->params.cohesionRadius, 0, 100, 0);
 
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef(0, 0, -squareSize);

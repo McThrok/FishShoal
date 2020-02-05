@@ -41,8 +41,8 @@ struct integrate_functor
 	__device__
 		void operator()(Tuple t)
 	{
-		volatile float4 posData = thrust::get<0>(t);
-		volatile float4 velData = thrust::get<1>(t);
+		volatile float2 posData = thrust::get<0>(t);
+		volatile float2 velData = thrust::get<1>(t);
 		float2 pos = make_float2(posData.x, posData.y);
 		float2 vel = setLength(make_float2(velData.x, velData.y), params.maxSpeed);
 
@@ -57,8 +57,8 @@ struct integrate_functor
 		if (pos.y < -sqs) pos.y = sqs;
 
 		// store new position and velocity
-		thrust::get<0>(t) = make_float4(pos.x, pos.y, 0, posData.w);
-		thrust::get<1>(t) = make_float4(vel.x, vel.y, 0, velData.w);
+		thrust::get<0>(t) = pos;
+		thrust::get<1>(t) = vel;
 	}
 };
 
@@ -82,7 +82,7 @@ __device__ uint calcGridHash(int2 gridPos)
 __global__
 void calcHashD(uint* gridParticleHash,  // output
 	uint* gridParticleIndex, // output
-	float4* pos,               // input: positions
+	float2* pos,               // input: positions
 	uint    numParticles)
 {
 	//uint index = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
@@ -90,7 +90,7 @@ void calcHashD(uint* gridParticleHash,  // output
 
 	if (index >= numParticles) return;
 
-	volatile float4 p = pos[index];
+	volatile float2 p = pos[index];
 
 	// get address in grid
 	int2 gridPos = calcGridPos(make_float2(p.x, p.y));
@@ -106,12 +106,12 @@ void calcHashD(uint* gridParticleHash,  // output
 __global__
 void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start index
 	uint* cellEnd,          // output: cell end index
-	float4* sortedPos,        // output: sorted positions
-	float4* sortedVel,        // output: sorted velocities
+	float2* sortedPos,        // output: sorted positions
+	float2* sortedVel,        // output: sorted velocities
 	uint* gridParticleHash, // input: sorted grid hashes
 	uint* gridParticleIndex,// input: sorted particle indices
-	float4* oldPos,           // input: sorted position array
-	float4* oldVel,           // input: sorted velocity array
+	float2* oldPos,           // input: sorted position array
+	float2* oldVel,           // input: sorted velocity array
 	uint    numParticles)
 {
 	// Handle to thread block group
@@ -163,8 +163,8 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 
 		// Now use the sorted index to reorder the pos and vel data
 		uint sortedIndex = gridParticleIndex[index];
-		float4 pos = oldPos[sortedIndex];
-		float4 vel = oldVel[sortedIndex];
+		float2 pos = oldPos[sortedIndex];
+		float2 vel = oldVel[sortedIndex];
 
 		sortedPos[index] = pos;
 		sortedVel[index] = vel;
@@ -195,8 +195,8 @@ float2 calculateAcceleration(
 	uint    index,
 	float2  pos,
 	float2  vel,
-	float4* oldPos,
-	float4* oldVel,
+	float2* oldPos,
+	float2* oldVel,
 	uint* cellStart,
 	uint* cellEnd)
 {
@@ -297,9 +297,9 @@ float2 calculateAcceleration(
 }
 
 __global__
-void collideD(float4* newVel,               // output: new velocity
-	float4* oldPos,               // input: sorted positions
-	float4* oldVel,               // input: sorted velocities
+void collideD(float2* newVel,               // output: new velocity
+	float2* oldPos,               // input: sorted positions
+	float2* oldVel,               // input: sorted velocities
 	uint* gridParticleIndex,    // input: sorted particle indices
 	uint* cellStart,
 	uint* cellEnd,
@@ -318,8 +318,7 @@ void collideD(float4* newVel,               // output: new velocity
 
 	// write new velocity back to original unsorted location
 	uint originalIndex = gridParticleIndex[index];
-	float2 new_vel = setLength(vel + acc, params.maxSpeed);
-	newVel[originalIndex] = make_float4(new_vel.x, new_vel.y, 0.0f, 0.0f);
+	newVel[originalIndex] = setLength(vel + acc, params.maxSpeed);
 }
 
 #endif

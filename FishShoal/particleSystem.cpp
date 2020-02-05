@@ -86,25 +86,22 @@ inline float lerp(float a, float b, float t)
 }
 
 // create a color ramp
-void colorRamp(float t, float* r)
+void colorRamp(int i, float* r)
 {
-	const int ncolors = 7;
+	const int ncolors = 6;
 	float c[ncolors][3] =
 	{
 		{ 1.0, 0.0, 0.0, },
-		{ 1.0, 0.5, 0.0, },
-		{ 1.0, 1.0, 0.0, },
 		{ 0.0, 1.0, 0.0, },
-		{ 0.0, 1.0, 1.0, },
 		{ 0.0, 0.0, 1.0, },
 		{ 1.0, 0.0, 1.0, },
+		{ 1.0, 1.0, 0.0, },
+		{ 0.0, 1.0, 1.0, },
 	};
-	t = t * (ncolors - 1);
-	int i = (int)t;
-	float u = t - floor(t);
-	r[0] = lerp(c[i][0], c[i + 1][0], u);
-	r[1] = lerp(c[i][1], c[i + 1][1], u);
-	r[2] = lerp(c[i][2], c[i + 1][2], u);
+	i %= ncolors;
+	r[0] = c[i][0];
+	r[1] = c[i][1];
+	r[2] = c[i][2];
 }
 
 void
@@ -115,10 +112,10 @@ ParticleSystem::_initialize(int numParticles)
 	m_numParticles = numParticles;
 
 	// allocate host storage
-	m_hPos = new float[m_numParticles * 4];
-	m_hVel = new float[m_numParticles * 4];
-	memset(m_hPos, 0, m_numParticles * 4 * sizeof(float));
-	memset(m_hVel, 0, m_numParticles * 4 * sizeof(float));
+	m_hPos = new float[m_numParticles * 2];
+	m_hVel = new float[m_numParticles * 2];
+	memset(m_hPos, 0, m_numParticles * 2 * sizeof(float));
+	memset(m_hVel, 0, m_numParticles * 2 * sizeof(float));
 
 	m_hCellStart = new uint[m_numGridCells];
 	memset(m_hCellStart, 0, m_numGridCells * sizeof(uint));
@@ -127,7 +124,7 @@ ParticleSystem::_initialize(int numParticles)
 	memset(m_hCellEnd, 0, m_numGridCells * sizeof(uint));
 
 	// allocate GPU data
-	unsigned int memSize = sizeof(float) * 4 * m_numParticles;
+	unsigned int memSize = sizeof(float) * 2 * m_numParticles;
 
 	m_posVbo = createVBO(memSize);
 	registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
@@ -155,8 +152,7 @@ ParticleSystem::_initialize(int numParticles)
 
 	for (uint i = 0; i < m_numParticles; i++)
 	{
-		float t = i / (float)m_numParticles;
-		colorRamp(t, ptr);
+		colorRamp(i, ptr);
 
 		ptr += 3;
 		*ptr++ = 1.0f;
@@ -292,7 +288,7 @@ ParticleSystem::getArray(ParticleArray array)
 		break;
 	}
 
-	copyArrayFromDevice(hdata, ddata, &cuda_vbo_resource, m_numParticles * 4 * sizeof(float));
+	copyArrayFromDevice(hdata, ddata, &cuda_vbo_resource, m_numParticles * 2 * sizeof(float));
 	return hdata;
 }
 
@@ -308,14 +304,14 @@ ParticleSystem::setArray(ParticleArray array, const float* data, int start, int 
 	{
 		unregisterGLBufferObject(m_cuda_posvbo_resource);
 		glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
-		glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float), count * 4 * sizeof(float), data);
+		glBufferSubData(GL_ARRAY_BUFFER, start * 2 * sizeof(float), count * 2 * sizeof(float), data);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 	}
 	break;
 
 	case VELOCITY:
-		copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float), count * 4 * sizeof(float));
+		copyArrayToDevice(m_dVel, data, start * 2 * sizeof(float), count * 2 * sizeof(float));
 		break;
 	}
 }
@@ -335,13 +331,13 @@ ParticleSystem::initParticles()
 	{
 		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
 		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
-		m_hPos[p++] = 0;
-		m_hPos[p++] = 1.0f; // radius
+		//m_hPos[p++] = 0;
+		//m_hPos[p++] = 1.0f; // radius
 
 		m_hVel[v++] = frand() - 0.5f;
 		m_hVel[v++] = frand() - 0.5f;
-		m_hVel[v++] = 0.0f;
-		m_hVel[v++] = 0.0f;
+		//m_hVel[v++] = 0.0f;
+		//m_hVel[v++] = 0.0f;
 	}
 }
 
