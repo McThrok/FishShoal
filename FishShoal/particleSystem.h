@@ -42,6 +42,7 @@ class ParticleSystem
         void update(float deltaTime);
         void reset();
 
+        float2 getFirstPosition();
         float *getArray(ParticleArray array);
         void   setArray(ParticleArray array, const float *data, int start, int count);
 

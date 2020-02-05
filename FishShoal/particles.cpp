@@ -61,7 +61,7 @@
 #include "paramgl.h"
 
 #define GRID_SIZE 32
-#define NUM_PARTICLES   64*64;
+#define NUM_PARTICLES   32*32;
 
 const uint width = 900, height = 900;
 float squareSize = 200;
@@ -221,6 +221,20 @@ void display()
 	// cube
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(200.0);
+
+	//radius
+	glMatrixMode(GL_MODELVIEW);
+	float2 pos = psystem->getFirstPosition();
+	glLoadIdentity();
+	glTranslatef(pos.x,pos.y,0);
+
+	float r = psystem->params.particleRadius;
+	glColor3f(1.0, 0, 0);
+	glutWireCylinder(r*psystem->params.separationRadius, 0, 100, 0);
+	glColor3f(0, 1.0, 0);
+	glutWireCylinder(r*psystem->params.alignmentRadius, 0, 100, 0);
+	glColor3f(0, 0, 1.0);
+	glutWireCylinder(r*psystem->params.cohesionRadius, 0, 100, 0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

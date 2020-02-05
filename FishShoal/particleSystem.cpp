@@ -256,6 +256,18 @@ ParticleSystem::update(float deltaTime)
 	unmapGLBufferObject(m_cuda_posvbo_resource);
 }
 
+float2 ParticleSystem::getFirstPosition()
+{
+	assert(m_bInitialized);
+
+	float* hdata = m_hPos;
+	float* ddata = m_dPos;
+	struct cudaGraphicsResource* cuda_vbo_resource = m_cuda_posvbo_resource;
+
+	copyArrayFromDevice(hdata, ddata, &cuda_vbo_resource, 2 * sizeof(float));
+	return make_float2(hdata[0], hdata[1]);
+}
+
 float*
 ParticleSystem::getArray(ParticleArray array)
 {
