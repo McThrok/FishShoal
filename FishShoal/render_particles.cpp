@@ -66,7 +66,7 @@ void ParticleRenderer::_drawPoints()
 			for (int i = 0; i < m_numParticles; ++i)
 			{
 				glVertex3fv(&m_pos[k]);
-				k += 4;
+				k += 2;
 			}
 		}
 		glEnd();
@@ -74,7 +74,7 @@ void ParticleRenderer::_drawPoints()
 	else
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-		glVertexPointer(4, GL_FLOAT, 0, 0);
+		glVertexPointer(2, GL_FLOAT, 0, 0);
 		glEnableClientState(GL_VERTEX_ARRAY);
 
 		if (m_colorVBO)
