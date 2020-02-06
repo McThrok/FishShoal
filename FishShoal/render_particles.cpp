@@ -102,7 +102,7 @@ void ParticleRenderer::display()
 
 	glUseProgram(m_program);
 	glUniform1f(glGetUniformLocation(m_program, "pointScale"),1);
-	glUniform1f(glGetUniformLocation(m_program, "pointRadius"), 2);
+	glUniform1f(glGetUniformLocation(m_program, "pointRadius"), 5);
 
 	glColor3f(1, 1, 1);
 	_drawPoints();

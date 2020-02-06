@@ -52,9 +52,9 @@ struct integrate_functor
 		if (pos.x > wdiv2) pos.x = -wdiv2;
 		if (pos.x < -wdiv2) pos.x = wdiv2;
 
-		float whdiv2 = params.height / 2;
-		if (pos.y > whdiv2) pos.y = -whdiv2;
-		if (pos.y < -whdiv2) pos.y = whdiv2;
+		float hdiv2 = params.height / 2;
+		if (pos.y > hdiv2) pos.y = -hdiv2;
+		if (pos.y < -hdiv2) pos.y = hdiv2;
 
 		// store new position and velocity
 		thrust::get<0>(t) = pos;
