@@ -60,17 +60,16 @@
 #include "render_particles.h"
 #include "paramgl.h"
 
-#define GRID_SIZE 16
-#define NUM_PARTICLES   128*128;
+//#define GRID_SIZE 16
+#define RADIUS 70
+#define NUM_PARTICLES   10000;
 
-const uint width = 900, height = 900;
-float squareSize = 200;
+uint width = 1800, height = 1000;
 
 // view params
 int ox, oy;
 
-uint numParticles = 0;
-uint2 gridSize;
+//uint numParticles = 0;
 
 // simulation parameters
 float timestep = 0.5f;
@@ -83,7 +82,7 @@ float alignmentRadius = 0.75f;
 float cohesionRadius = 1.f;
 float visionAngle = 180.f;
 float mouseFactor = 20.f;
-float mouseRadius = 5.f;
+float mouseRadius = 40.f;
 
 float maxSpeed = 0.8f;
 float maxAcceleration = 0.2f;
@@ -113,8 +112,7 @@ extern "C" void copyArrayFromDevice(void* host, const void* device, unsigned int
 // initialize particle system
 void initParticleSystem(int numParticles, uint2 gridSize)
 {
-	psystem = new ParticleSystem(numParticles, gridSize);
-	squareSize = psystem->params.squareSize;
+	psystem = new ParticleSystem(numParticles, gridSize, width, height, RADIUS);
 	psystem->reset();
 
 	renderer = new ParticleRenderer;
@@ -175,7 +173,7 @@ void computeFPS()
 	{
 		char fps[256];
 		float ifps = 1.f / (sdkGetAverageTimerValue(&timer) / 1000.f);
-		sprintf(fps, "CUDA Particles (%d particles): %3.1f fps", numParticles, ifps);
+		sprintf(fps, "CUDA Particles (%d particles): %3.1f fps", psystem->getNumParticles(), ifps);
 
 		glutSetWindowTitle(fps);
 		fpsCount = 0;
@@ -267,7 +265,7 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(-squareSize / 2, squareSize / 2, -squareSize / 2, squareSize / 2, -1000, 1000);
+	glOrtho(-GLdouble(psystem->params.width) / 2, GLdouble(psystem->params.width) / 2, -GLdouble(psystem->params.height) / 2, GLdouble(psystem->params.height) / 2, -1000, 1000);
 
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, w, h);
@@ -293,32 +291,6 @@ void mouse(int button, int state, int x, int y)
 	glutPostRedisplay();
 }
 
-//// transform vector by matrix
-//void xform(float* v, float* r, GLfloat* m)
-//{
-//	r[0] = v[0] * m[0] + v[1] * m[4] + v[2] * m[8] + m[12];
-//	r[1] = v[0] * m[1] + v[1] * m[5] + v[2] * m[9] + m[13];
-//	r[2] = v[0] * m[2] + v[1] * m[6] + v[2] * m[10] + m[14];
-//}
-//
-//// transform vector by transpose of matrix
-//void ixform(float* v, float* r, GLfloat* m)
-//{
-//	r[0] = v[0] * m[0] + v[1] * m[1] + v[2] * m[2];
-//	r[1] = v[0] * m[4] + v[1] * m[5] + v[2] * m[6];
-//	r[2] = v[0] * m[8] + v[1] * m[9] + v[2] * m[10];
-//}
-//
-//void ixformPoint(float* v, float* r, GLfloat* m)
-//{
-//	float x[4];
-//	x[0] = v[0] - m[12];
-//	x[1] = v[1] - m[13];
-//	x[2] = v[2] - m[14];
-//	x[3] = 1.0f;
-//	ixform(x, r, m);
-//}
-
 void motion(int x, int y)
 {
 	float dx, dy;
@@ -335,8 +307,7 @@ void motion(int x, int y)
 	}
 	else
 	{
-		float sqs = psystem->params.squareSize;
-		psystem->params.mousePos = make_float2(1.0 * sqs * x / width - sqs / 2, sqs / 2 - 1.0 * sqs * y / height);
+		psystem->params.mousePos = make_float2(x - GLdouble(psystem->params.width) / 2, GLdouble(psystem->params.height) / 2 - y);
 	}
 
 	ox = x;
@@ -359,7 +330,7 @@ void initParams()
 {
 	// create a new parameter list
 	params = new ParamListGL("misc");
-	params->AddParam(new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f, &timestep));
+	params->AddParam(new Param<float>("time step", timestep, 0.0f, 5.0f, 0.01f, &timestep));
 
 	params->AddParam(new Param<float>("separation factor", separationFactor, 0.0f, 1.0f, 0.001f, &separationFactor));
 	params->AddParam(new Param<float>("alignment factor", alignmentFactor, 0.0f, 1.0f, 0.001f, &alignmentFactor));
@@ -368,13 +339,13 @@ void initParams()
 	params->AddParam(new Param<float>("alignment radius", alignmentRadius, 0.0f, 1.0f, 0.001f, &alignmentRadius));
 	params->AddParam(new Param<float>("cohesion radius", cohesionRadius, 0.0f, 1.0f, 0.001f, &cohesionRadius));
 
-	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 10.0f, 0.001f, &mouseRadius));
-	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 50.0f, 0.001f, &mouseFactor));
+	params->AddParam(new Param<float>("mouse radius", mouseRadius, 0.0f, 100.0f, 0.001f, &mouseRadius));
+	params->AddParam(new Param<float>("mouse factor", mouseFactor, 0.0f, 100.0f, 0.001f, &mouseFactor));
 
-	params->AddParam(new Param<float>("vision angle", visionAngle, 90.0f, 180.0f, 1.f, &visionAngle));
+	params->AddParam(new Param<float>("vision angle", visionAngle, 0.0f, 180.0f, 1.f, &visionAngle));
 
-	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 3.0f, 0.001f, &maxSpeed));
-	params->AddParam(new Param<float>("max acceleration", maxAcceleration, 0.0f, 1.0f, 0.001f, &maxAcceleration));
+	params->AddParam(new Param<float>("max speed", maxSpeed, 0.0f, 5.0f, 0.001f, &maxSpeed));
+	params->AddParam(new Param<float>("max acceleration", maxAcceleration, 0.0f, 2.0f, 0.001f, &maxAcceleration));
 }
 
 int main(int argc, char** argv)
@@ -385,10 +356,13 @@ int main(int argc, char** argv)
 
 	printf("%s Starting...\n\n", sSDKsample);
 
-	numParticles = NUM_PARTICLES;
-	uint gridDim = GRID_SIZE;
+	uint numParticles = NUM_PARTICLES;
+	uint2 gridSize;
+	gridSize.x = width / RADIUS;
+	gridSize.y = height / RADIUS;
+	width = gridSize.x * RADIUS;
+	height = gridSize.y * RADIUS;
 
-	gridSize.x = gridSize.y = gridDim;
 	printf("grid: %d x %d = %d cells\n", gridSize.x, gridSize.y, gridSize.x * gridSize.y);
 	printf("particles: %d\n", numParticles);
 

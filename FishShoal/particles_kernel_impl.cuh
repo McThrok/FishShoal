@@ -48,13 +48,13 @@ struct integrate_functor
 
 		pos += vel * deltaTime;
 
-		float sqs = params.squareSize / 2;
+		float wdiv2 = params.width / 2;
+		if (pos.x > wdiv2) pos.x = -wdiv2;
+		if (pos.x < -wdiv2) pos.x = wdiv2;
 
-		if (pos.x > sqs) pos.x = -sqs;
-		if (pos.x < -sqs) pos.x = sqs;
-
-		if (pos.y > sqs) pos.y = -sqs;
-		if (pos.y < -sqs) pos.y = sqs;
+		float whdiv2 = params.height / 2;
+		if (pos.y > whdiv2) pos.y = -whdiv2;
+		if (pos.y < -whdiv2) pos.y = whdiv2;
 
 		// store new position and velocity
 		thrust::get<0>(t) = pos;
@@ -187,7 +187,7 @@ __device__ float angleBetween(float2 v1, float2 v2)
 {
 	float d1 = length(v1);
 	float d2 = length(v2);
-	return (v1.x * v2.y - v1.y * v2.x) / d1 / d2;
+	return (v1.x * v2.x + v1.y * v2.y) / d1 / d2;
 }
 
 __device__
@@ -215,10 +215,10 @@ float2 calculateAcceleration(
 			int2 neightbourGrid = gridPos + make_int2(x, y);
 
 			float2 offset = make_float2(0, 0);
-			if (neightbourGrid.x == -1) { neightbourGrid.x = params.gridSize.x - 1; offset.x -= params.squareSize; }
-			else if (neightbourGrid.x == params.gridSize.x) { neightbourGrid.x = 0; offset.x += params.squareSize; }
-			if (neightbourGrid.y == -1) { neightbourGrid.y = params.gridSize.y - 1; offset.y -= params.squareSize; }
-			else if (neightbourGrid.y == params.gridSize.y) { neightbourGrid.y = 0; offset.y += params.squareSize; }
+			if (neightbourGrid.x == -1) { neightbourGrid.x = params.gridSize.x - 1; offset.x -= params.width; }
+			else if (neightbourGrid.x == params.gridSize.x) { neightbourGrid.x = 0; offset.x += params.width; }
+			if (neightbourGrid.y == -1) { neightbourGrid.y = params.gridSize.y - 1; offset.y -= params.height; }
+			else if (neightbourGrid.y == params.gridSize.y) { neightbourGrid.y = 0; offset.y += params.height; }
 
 			uint gridHash = calcGridHash(neightbourGrid);
 
@@ -241,7 +241,7 @@ float2 calculateAcceleration(
 
 					if (r < dist) continue;
 
-					float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
+					float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180.0);
 					float cosToVec = angleBetween(toVec, vel);
 
 					if (cosVision > cosToVec) continue;
@@ -296,7 +296,7 @@ float2 calculateAcceleration(
 	float2 repl_acc = make_float2(0, 0);
 	float2 toMouse = params.mousePos - pos;
 
-	float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180);
+	float cosVision = cosf(params.visionAngle * CUDART_PI_F / 180.0);
 	float cosToVec = angleBetween(toMouse, vel);
 
 	if (cosVision <= cosToVec && length(toMouse) < params.mouseRadius)

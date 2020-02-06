@@ -33,7 +33,7 @@
 #define CUDART_PI_F         3.141592654f
 #endif
 
-ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
+ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize, uint width, uint height, uint RADIUS) :
 	m_bInitialized(false),
 	m_numParticles(numParticles),
 	m_hPos(0),
@@ -43,20 +43,21 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize) :
 	m_gridSize(gridSize),
 	m_timer(NULL)
 {
-	params.squareSize = 200;
+	params.width = width;
+	params.height = height;
 	m_numGridCells = m_gridSize.x * m_gridSize.y;
 
 	// set simulation parameters
 	params.gridSize = m_gridSize;
 	params.numBodies = m_numParticles;
 
-	params.particleRadius = params.squareSize / m_gridSize.x;
+	params.particleRadius = RADIUS;
 
 	//use for mouse
 	params.mousePos = make_float2(-1.2f, -0.8f);
 	params.mouseRadius = 0.2f;
 
-	params.worldOrigin = make_float2(-params.squareSize / 2, -params.squareSize / 2);
+	params.worldOrigin = make_float2(-GLdouble(params.width) / 2, -GLdouble(params.height) / 2);
 	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
 	params.cellSize = make_float2(cellSize, cellSize);
 
@@ -329,8 +330,8 @@ ParticleSystem::initParticles()
 
 	for (uint i = 0; i < m_numParticles; i++)
 	{
-		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
-		m_hPos[p++] = params.squareSize * (frand() - 0.5f);
+		m_hPos[p++] = params.width * (frand() - 0.5f);
+		m_hPos[p++] = params.height * (frand() - 0.5f);
 		//m_hPos[p++] = 0;
 		//m_hPos[p++] = 1.0f; // radius
 
