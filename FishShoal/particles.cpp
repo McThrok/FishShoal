@@ -1,24 +1,4 @@
-/*
- * Copyright 1993-2015 NVIDIA Corporation.  All rights reserved.
- *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
- *
- */
 
- /*
-	 Particle system example with collisions using uniform grid
-
-	 CUDA 2.1 SDK release 12/2008
-	 - removed atomic grid method, some optimization, added demo mode.
-
-	 CUDA 2.2 release 3/2009
-	 - replaced sort function with latest radix sort, now disables v-sync.
-	 - added support for automated testing and comparison to a reference value.
- */
  //compute_30, sm_30
  //compute_35, sm_35
  //compute_37, sm_37
@@ -61,8 +41,8 @@
 #include "paramgl.h"
 
 //#define GRID_SIZE 16
-#define RADIUS 70
-#define NUM_PARTICLES   10000;
+#define RADIUS 30
+#define NUM_PARTICLES 50000;
 
 uint width = 1800, height = 1000;
 
@@ -72,7 +52,7 @@ int ox, oy;
 //uint numParticles = 0;
 
 // simulation parameters
-float timestep = 0.5f;
+float timestep = 1.f;
 
 float separationFactor = 1.f;
 float alignmentFactor = 0.75f;
@@ -84,8 +64,8 @@ float visionAngle = 180.f;
 float mouseFactor = 20.f;
 float mouseRadius = 40.f;
 
-float maxSpeed = 0.8f;
-float maxAcceleration = 0.2f;
+float maxSpeed = 1.6f;
+float maxAcceleration = 0.4f;
 
 ParticleSystem* psystem = 0;
 

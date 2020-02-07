@@ -198,7 +198,7 @@ extern "C"
 
     }
 
-    void collide(float *newVel,
+    void run(float *newVel,
                  float *sortedPos,
                  float *sortedVel,
                  uint  *gridParticleIndex,
@@ -213,7 +213,7 @@ extern "C"
         computeGridSize(numParticles, 64, numBlocks, numThreads);
 
         // execute the kernel
-        collideD<<< numBlocks, numThreads >>>((float2 *)newVel,
+        run<<< numBlocks, numThreads >>>((float2 *)newVel,
                                               (float2 *)sortedPos,
                                               (float2 *)sortedVel,
                                               gridParticleIndex,

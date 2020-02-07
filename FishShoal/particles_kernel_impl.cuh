@@ -24,9 +24,7 @@ namespace cg = cooperative_groups;
 #include "helper_math.h"
 #include "math_constants.h"
 #include "particles_kernel.cuh"
-
-// simulation parameters in constant memory
-__constant__ SimParams params;
+__constant__ SimParams params;
 __constant__ float eps = 1e-7;
 
 
@@ -56,84 +54,72 @@ struct integrate_functor
 		if (pos.y > hdiv2) pos.y = -hdiv2;
 		if (pos.y < -hdiv2) pos.y = hdiv2;
 
-		// store new position and velocity
+		
 		thrust::get<0>(t) = pos;
 		thrust::get<1>(t) = vel;
 	}
 };
-
-// calculate position in uniform grid
-__device__ int2 calcGridPos(float2 p)
+__device__ int2 calcGridPos(float2 p)
 {
 	int2 gridPos;
 	gridPos.x = floor((p.x - params.worldOrigin.x) / params.cellSize.x);
 	gridPos.y = floor((p.y - params.worldOrigin.y) / params.cellSize.y);
 	return gridPos;
 }
-
-// calculate address in grid from position
-__device__ uint calcGridHash(int2 gridPos)
+__device__ uint calcGridHash(int2 gridPos)
 {
-	//return __umul24(gridPos.y, params.gridSize.x) + gridPos.x;
 	return gridPos.y * params.gridSize.x + gridPos.x;
 }
-
-// calculate grid hash value for each particle
-__global__
-void calcHashD(uint* gridParticleHash,  // output
-	uint* gridParticleIndex, // output
-	float2* pos,               // input: positions
+__global__
+void calcHashD(uint* gridParticleHash,  
+	uint* gridParticleIndex, 
+	float2* pos,               
 	uint    numParticles)
 {
-	//uint index = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	uint index = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (index >= numParticles) return;
 
 	volatile float2 p = pos[index];
 
-	// get address in grid
+	
 	int2 gridPos = calcGridPos(make_float2(p.x, p.y));
 	uint hash = calcGridHash(gridPos);
 
-	// store grid hash and particle index
+	
 	gridParticleHash[index] = hash;
 	gridParticleIndex[index] = index;
 }
 
-// rearrange particle data into sorted order, and find the start of each cell
-// in the sorted hash array
 __global__
-void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start index
-	uint* cellEnd,          // output: cell end index
-	float2* sortedPos,        // output: sorted positions
-	float2* sortedVel,        // output: sorted velocities
-	uint* gridParticleHash, // input: sorted grid hashes
-	uint* gridParticleIndex,// input: sorted particle indices
-	float2* oldPos,           // input: sorted position array
-	float2* oldVel,           // input: sorted velocity array
+void reorderDataAndFindCellStartD(uint* cellStart,        
+	uint* cellEnd,          
+	float2* sortedPos,        
+	float2* sortedVel,        
+	uint* gridParticleHash, 
+	uint* gridParticleIndex,
+	float2* oldPos,           
+	float2* oldVel,           
 	uint    numParticles)
 {
-	// Handle to thread block group
+	
 	cg::thread_block cta = cg::this_thread_block();
-	extern __shared__ uint sharedHash[];    // blockSize + 1 elements
+	extern __shared__ uint sharedHash[];    
 	uint index = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 
 	uint hash;
 
-	// handle case when no. of particles not multiple of block size
+	
 	if (index < numParticles)
 	{
 		hash = gridParticleHash[index];
 
-		// Load hash data into shared memory so that we can look
-		// at neighboring particle's hash value without loading
-		// two hash values per thread
+
 		sharedHash[threadIdx.x + 1] = hash;
 
 		if (index > 0 && threadIdx.x == 0)
 		{
-			// first thread in block must load neighbor particle hash
+			
 			sharedHash[0] = gridParticleHash[index - 1];
 		}
 	}
@@ -142,12 +128,6 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 
 	if (index < numParticles)
 	{
-		// If this particle has a different cell index to the previous
-		// particle then it must be the first particle in the cell,
-		// so store the index of this particle in the cell.
-		// As it isn't the first particle, it must also be the cell end of
-		// the previous particle's cell
-
 		if (index == 0 || hash != sharedHash[threadIdx.x])
 		{
 			cellStart[hash] = index;
@@ -161,7 +141,7 @@ void reorderDataAndFindCellStartD(uint* cellStart,        // output: cell start 
 			cellEnd[hash] = index + 1;
 		}
 
-		// Now use the sorted index to reorder the pos and vel data
+		
 		uint sortedIndex = gridParticleIndex[index];
 		float2 pos = oldPos[sortedIndex];
 		float2 vel = oldVel[sortedIndex];
@@ -222,17 +202,15 @@ float2 calculateAcceleration(
 
 			uint gridHash = calcGridHash(neightbourGrid);
 
-			// get start of bucket for this cell
 			uint startIndex = cellStart[gridHash];
 
-			if (startIndex != 0xffffffff)          // cell is not empty
+			if (startIndex != 0xffffffff)          
 			{
-				// iterate over particles in this cell
 				uint endIndex = cellEnd[gridHash];
 
 				for (uint j = startIndex; j < endIndex; j++)
 				{
-					if (j == index) continue;               // check not colliding with self
+					if (j == index) continue;              
 
 					float2 pos2 = make_float2(oldPos[j].x, oldPos[j].y) + offset;
 					float2 toVec = pos2 - pos;
@@ -272,7 +250,7 @@ float2 calculateAcceleration(
 	if (sep_n)
 	{
 		sep_acc = sep_sum / sep_n;
-		sep_acc = setLength(sep_acc, params.maxSpeed);// -vel;
+		sep_acc = setLength(sep_acc, params.maxSpeed);
 		sep_acc = setLength(sep_acc, params.maxAcceleration) * params.separationFactor;
 	}
 
@@ -280,7 +258,7 @@ float2 calculateAcceleration(
 	if (alg_n)
 	{
 		alg_acc = alg_sum / alg_n;
-		alg_acc = setLength(alg_acc, params.maxSpeed);// -vel;
+		alg_acc = setLength(alg_acc, params.maxSpeed);
 		alg_acc = setLength(alg_acc, params.maxAcceleration) * params.alignmentFactor;
 	}
 
@@ -289,7 +267,7 @@ float2 calculateAcceleration(
 	if (coh_n)
 	{
 		coh_acc = coh_sum / coh_n - pos;
-		coh_acc = setLength(coh_acc, params.maxSpeed);// -vel;
+		coh_acc = setLength(coh_acc, params.maxSpeed);
 		coh_acc = setLength(coh_acc, params.maxAcceleration) * params.cohesionFactor;
 	}
 
@@ -301,7 +279,7 @@ float2 calculateAcceleration(
 
 	if (cosVision <= cosToVec && length(toMouse) < params.mouseRadius)
 	{
-		repl_acc = setLength(-toMouse, params.maxSpeed);// -vel;
+		repl_acc = setLength(-toMouse, params.maxSpeed);
 		repl_acc = setLength(repl_acc, params.maxAcceleration) * params.mouseFactor;
 	}
 
@@ -309,10 +287,10 @@ float2 calculateAcceleration(
 }
 
 __global__
-void collideD(float2* newVel,               // output: new velocity
-	float2* oldPos,               // input: sorted positions
-	float2* oldVel,               // input: sorted velocities
-	uint* gridParticleIndex,    // input: sorted particle indices
+void run(float2* newVel,               
+	float2* oldPos,               
+	float2* oldVel,               
+	uint* gridParticleIndex,    
 	uint* cellStart,
 	uint* cellEnd,
 	uint numParticles)
@@ -321,14 +299,14 @@ void collideD(float2* newVel,               // output: new velocity
 
 	if (index >= numParticles) return;
 
-	// read particle data from sorted arrays
+	
 	float2 pos = make_float2(oldPos[index].x, oldPos[index].y);
 	float2 vel = make_float2(oldVel[index].x, oldVel[index].y);
 
-	// examine neighbouring cells
+	
 	float2 acc = calculateAcceleration(index, pos, vel, oldPos, oldVel, cellStart, cellEnd);
 
-	// write new velocity back to original unsorted location
+	
 	uint originalIndex = gridParticleIndex[index];
 	newVel[originalIndex] = setLength(vel + acc, params.maxSpeed);
 }

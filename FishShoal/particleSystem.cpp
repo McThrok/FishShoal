@@ -9,8 +9,7 @@
  *
  */
 
- // OpenGL Graphics includes
-#define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
+ #define HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
 #include <helper_gl.h>
 
 #include "particleSystem.h"
@@ -47,19 +46,16 @@ ParticleSystem::ParticleSystem(uint numParticles, uint2 gridSize, uint width, ui
 	params.height = height;
 	m_numGridCells = m_gridSize.x * m_gridSize.y;
 
-	// set simulation parameters
-	params.gridSize = m_gridSize;
+		params.gridSize = m_gridSize;
 	params.numBodies = m_numParticles;
 
 	params.particleRadius = RADIUS;
 
-	//use for mouse
-	params.mousePos = make_float2(-1.2f, -0.8f);
+		params.mousePos = make_float2(-1.2f, -0.8f);
 	params.mouseRadius = 0.2f;
 
 	params.worldOrigin = make_float2(-GLdouble(params.width) / 2, -GLdouble(params.height) / 2);
-	float cellSize = params.particleRadius * 2.0f;  // cell size equal to particle diameter
-	params.cellSize = make_float2(cellSize, cellSize);
+	float cellSize = params.particleRadius * 2.0f;  	params.cellSize = make_float2(cellSize, cellSize);
 
 	_initialize(numParticles);
 }
@@ -86,7 +82,6 @@ inline float lerp(float a, float b, float t)
 	return a + t * (b - a);
 }
 
-// create a color ramp
 void colorRamp(int i, float* r)
 {
 	const int ncolors = 6;
@@ -112,8 +107,7 @@ ParticleSystem::_initialize(int numParticles)
 
 	m_numParticles = numParticles;
 
-	// allocate host storage
-	m_hPos = new float[m_numParticles * 2];
+		m_hPos = new float[m_numParticles * 2];
 	m_hVel = new float[m_numParticles * 2];
 	memset(m_hPos, 0, m_numParticles * 2 * sizeof(float));
 	memset(m_hVel, 0, m_numParticles * 2 * sizeof(float));
@@ -124,8 +118,7 @@ ParticleSystem::_initialize(int numParticles)
 	m_hCellEnd = new uint[m_numGridCells];
 	memset(m_hCellEnd, 0, m_numGridCells * sizeof(uint));
 
-	// allocate GPU data
-	unsigned int memSize = sizeof(float) * 2 * m_numParticles;
+		unsigned int memSize = sizeof(float) * 2 * m_numParticles;
 
 	m_posVbo = createVBO(memSize);
 	registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
@@ -146,8 +139,7 @@ ParticleSystem::_initialize(int numParticles)
 	m_colorVBO = createVBO(m_numParticles * 4 * sizeof(float));
 	registerGLBufferObject(m_colorVBO, &m_cuda_colorvbo_resource);
 
-	// fill color buffer
-	glBindBuffer(GL_ARRAY_BUFFER, m_colorVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, m_colorVBO);
 	float* data = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	float* ptr = data;
 
@@ -194,7 +186,6 @@ ParticleSystem::_finalize()
 	glDeleteBuffers(1, (const GLuint*)&m_colorVBO);
 }
 
-// step the simulation
 void
 ParticleSystem::update(float deltaTime)
 {
@@ -204,28 +195,22 @@ ParticleSystem::update(float deltaTime)
 
 	dPos = (float*)mapGLBufferObject(&m_cuda_posvbo_resource);
 
-	// update constants
 	setParameters(&params);
 
-	// integrate
 	integrateSystem(
 		dPos,
 		m_dVel,
 		deltaTime,
 		m_numParticles);
 
-	// calculate grid hash
 	calcHash(
 		m_dGridParticleHash,
 		m_dGridParticleIndex,
 		dPos,
 		m_numParticles);
 
-	// sort particles based on hash
 	sortParticles(m_dGridParticleHash, m_dGridParticleIndex, m_numParticles);
 
-	// reorder particle arrays into sorted order and
-	// find start and end of each cell
 	reorderDataAndFindCellStart(
 		m_dCellStart,
 		m_dCellEnd,
@@ -238,8 +223,7 @@ ParticleSystem::update(float deltaTime)
 		m_numParticles,
 		m_numGridCells);
 
-	// process collisions
-	collide(
+	run(
 		m_dVel,
 		m_dSortedPos,
 		m_dSortedVel,
@@ -249,7 +233,6 @@ ParticleSystem::update(float deltaTime)
 		m_numParticles,
 		m_numGridCells);
 
-	// note: do unmap at end here to avoid unnecessary graphics/CUDA context switch
 	unmapGLBufferObject(m_cuda_posvbo_resource);
 }
 
@@ -332,14 +315,10 @@ ParticleSystem::initParticles()
 	{
 		m_hPos[p++] = params.width * (frand() - 0.5f);
 		m_hPos[p++] = params.height * (frand() - 0.5f);
-		//m_hPos[p++] = 0;
-		//m_hPos[p++] = 1.0f; // radius
-
+				
 		m_hVel[v++] = frand() - 0.5f;
 		m_hVel[v++] = frand() - 0.5f;
-		//m_hVel[v++] = 0.0f;
-		//m_hVel[v++] = 0.0f;
-	}
+					}
 }
 
 void

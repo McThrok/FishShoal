@@ -49,7 +49,7 @@ extern "C"
                                      uint   numParticles,
                                      uint   numCells);
 
-    void collide(float *newVel,
+    void run(float *newVel,
                  float *sortedPos,
                  float *sortedVel,
                  uint  *gridParticleIndex,
