@@ -272,7 +272,7 @@ float2 calculateAcceleration(
 	if (sep_n)
 	{
 		sep_acc = sep_sum / sep_n;
-		sep_acc = setLength(sep_acc, params.maxSpeed) - vel;
+		sep_acc = setLength(sep_acc, params.maxSpeed);// -vel;
 		sep_acc = setLength(sep_acc, params.maxAcceleration) * params.separationFactor;
 	}
 
@@ -280,7 +280,7 @@ float2 calculateAcceleration(
 	if (alg_n)
 	{
 		alg_acc = alg_sum / alg_n;
-		alg_acc = setLength(alg_acc, params.maxSpeed) - vel;
+		alg_acc = setLength(alg_acc, params.maxSpeed);// -vel;
 		alg_acc = setLength(alg_acc, params.maxAcceleration) * params.alignmentFactor;
 	}
 
@@ -289,7 +289,7 @@ float2 calculateAcceleration(
 	if (coh_n)
 	{
 		coh_acc = coh_sum / coh_n - pos;
-		coh_acc = setLength(coh_acc, params.maxSpeed) -vel;
+		coh_acc = setLength(coh_acc, params.maxSpeed);// -vel;
 		coh_acc = setLength(coh_acc, params.maxAcceleration) * params.cohesionFactor;
 	}
 
@@ -301,7 +301,7 @@ float2 calculateAcceleration(
 
 	if (cosVision <= cosToVec && length(toMouse) < params.mouseRadius)
 	{
-		repl_acc = setLength(-toMouse, params.maxSpeed) - vel;
+		repl_acc = setLength(-toMouse, params.maxSpeed);// -vel;
 		repl_acc = setLength(repl_acc, params.maxAcceleration) * params.mouseFactor;
 	}
 
